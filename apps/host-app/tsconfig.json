@@ -1,42 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "src",
-    "paths": {
-      "resume-account-mf/Routes": [
-        "../../resume-account-mf/src/app/remote-entry/entry.routes"
-      ],
-      "@core/*": [
-        "app/core/*"
-      ],
-      "@environments/*": [
-        "./environments/*"
-      ],
-      "@images/*": [
-        "assets/images/*"
-      ],
-      "@icons/*": [
-        "assets/icons/*"
-      ],
-      "@styles/*": [
-        "assets/styles/*"
-      ],
-      "@models/*": [
-        "app/shared/models/*"
-      ],
-      "@pages/*": [
-        "app/pages/*"
-      ],
-      "@components/*": [
-        "app/components/*"
-      ],
-      "@services/*": [
-        "app/core/services/*"
-      ],
-      "@shared/*": [
-        "app/shared/*"
-      ]
-    },
+    // "baseUrl": "src", <-- REMOVIDO (Conflitava com a base)
+    // "paths": { ... }, <-- REMOVIDO (Movido para a base)
+
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,

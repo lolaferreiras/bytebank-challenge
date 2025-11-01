@@ -1,12 +1,12 @@
 import { Component, ElementRef, HostListener, inject, Injectable } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { TransactionService } from '@core/services/transaction';
+import { TransactionService } from '@core/services/transaction'; // <-- MANTIDO (para .transactionsChanged$)
 import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 import { EditTransactionModal } from '@components/edit-transaction-modal/edit-transaction-modal';
 import { ConfirmDeleteDialog } from '@components/confirm-delete-dialog/confirm-delete-dialog';
-import { Transaction } from '../../../../../../domain/src';
+import { Transaction } from '@bytebank-challenge/domain';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
@@ -19,6 +19,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+
+import { GetAllTransactionsUseCase } from '@bytebank-challenge/application';
 
 @Injectable()
 export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
@@ -105,7 +107,9 @@ export class Extract {
 
   dialog = inject(MatDialog);
   elementRef = inject(ElementRef);
-  transactionService = inject(TransactionService);
+  
+  transactionService = inject(TransactionService); 
+  getAllTransactions = inject(GetAllTransactionsUseCase); 
 
   constructor() {
     this.searchSubject
@@ -120,6 +124,7 @@ export class Extract {
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {
+    // ... (código do HostListener inalterado) ...
     const target = event.target as HTMLElement;
 
     const clickedInsideComponent = this.elementRef.nativeElement.contains(target);
@@ -139,7 +144,8 @@ export class Extract {
   }
 
   private loadStatement(): void {
-    this.transactionService.getTransactions(this.pageIndex, this.pageSize, this.sort, this.order).subscribe((statement: any) => {
+    this.getAllTransactions.execute(this.pageIndex, this.pageSize, this.sort, this.order)
+      .subscribe((statement: any) => {
       this.totalItems = statement.result.pagination.totalItems;
       const itens: Array<any> = statement.result.transactions;
 
@@ -164,7 +170,7 @@ export class Extract {
 
       this.groupedTransactions = sortedEntries.map(([key, transactions]) => {
         const sampleDate = new Date(`${key}-01`);
-        const formattedMonth = sampleDate.toLocaleDateString('pt-BR', {
+        const formattedMonth = sampleDate.toLocaleString('pt-BR', {
           month: 'long',
           year: 'numeric',
           timeZone: 'UTC',
@@ -395,4 +401,4 @@ export class Extract {
       }
     });
   }
-} 
+}

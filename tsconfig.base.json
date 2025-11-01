@@ -14,12 +14,45 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {
+        "paths": {
+      // Atalhos das Libs (Corretos)
       "@bytebank-challenge/application": ["application/src/index.ts"],
       "@bytebank-challenge/domain": ["domain/src/index.ts"],
       "@bytebank-challenge/infrastructure": ["infrastructure/src/index.ts"],
-      "resume_account_mf/Routes": [
-        "apps/resume-account-mf/src/app/remote-entry/entry.routes.ts"
+      "resume-account-mf/Routes": [
+        "apps/resume-account-mf/src/app/remote-entry/entry.routes"
+      ],
+
+      // Atalhos do Host-App (Movidos e Corrigidos)
+      "@core/*": [
+        "apps/host-app/src/app/core/*"
+      ],
+      "@environments/*": [
+        "apps/host-app/src/environments/*"
+      ],
+      "@images/*": [
+        "apps/host-app/src/assets/images/*"
+      ],
+      "@icons/*": [
+        "apps/host-app/src/assets/icons/*"
+      ],
+      "@styles/*": [
+        "apps/host-app/src/assets/styles/*"
+      ],
+      "@models/*": [
+        "apps/host-app/src/app/shared/models/*"
+      ],
+      "@pages/*": [
+        "apps/host-app/src/app/pages/*"
+      ],
+      "@components/*": [
+        "apps/host-app/src/app/components/*"
+      ],
+      "@services/*": [
+        "apps/host-app/src/app/core/services/*"
+      ],
+      "@shared/*": [
+        "apps/host-app/src/app/shared/*"
       ]
     }
   },

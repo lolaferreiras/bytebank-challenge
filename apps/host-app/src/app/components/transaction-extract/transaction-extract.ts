@@ -6,7 +6,7 @@ import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 import { EditTransactionModal } from '@components/edit-transaction-modal/edit-transaction-modal';
 import { ConfirmDeleteDialog } from '@components/confirm-delete-dialog/confirm-delete-dialog';
-import { Transaction } from '../../../../../../domain/src';
+import { Transaction } from '@bytebank-challenge/domain';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';

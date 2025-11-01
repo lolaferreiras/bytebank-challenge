@@ -4,7 +4,11 @@ import {
   provideZoneChangeDetection,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { appRoutes } from './app.routes';
 import {
@@ -19,6 +23,9 @@ import { balanceReducer } from './state/balance/reducer';
 import { BalanceEffects } from './state/balance/effects';
 import { provideEffects } from '@ngrx/effects';
 
+import { ITransactionRepository } from '@bytebank-challenge/application';
+import { TransactionApiService } from '@bytebank-challenge/infrastructure';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideClientHydration(withEventReplay()),
@@ -27,6 +34,12 @@ export const appConfig: ApplicationConfig = {
     provideRouter(appRoutes),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimations(), // Necessário para MatDialog,
+
+    {
+      provide: ITransactionRepository,
+      useClass: TransactionApiService,
+    },
+
     provideStore(),
     provideStoreDevtools(),
     provideState('balance', balanceReducer),

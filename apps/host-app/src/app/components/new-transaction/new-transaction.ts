@@ -10,7 +10,7 @@ import { TransactionService } from '@core/services/transaction';
 import { MatCardModule } from '@angular/material/card';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UserService } from '@core/services/user';
-import { Transaction } from '../../../../../../domain/src';
+import { Transaction } from '@bytebank-challenge/domain';
 import { NotificationService } from '@shared/services/notification';
 
 import { LOCALE_ID } from '@angular/core';

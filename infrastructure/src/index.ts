@@ -1,1 +1,1 @@
-export * from './lib/infrastructure/infrastructure';
+export * from './lib/services/transaction-api.service';
