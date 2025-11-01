@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, inject, Injectable } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { TransactionService } from '@core/services/transaction'; // <-- MANTIDO (para .transactionsChanged$)
+import { TransactionService } from '@core/services/transaction';
 import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 import { EditTransactionModal } from '@components/edit-transaction-modal/edit-transaction-modal';
@@ -21,6 +21,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 import { GetAllTransactionsUseCase } from '@bytebank-challenge/application';
+import { DeleteTransactionUseCase } from '@bytebank-challenge/application';
+import { UpdateTransactionUseCase } from '@bytebank-challenge/application';
 
 @Injectable()
 export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
@@ -107,9 +109,11 @@ export class Extract {
 
   dialog = inject(MatDialog);
   elementRef = inject(ElementRef);
-  
-  transactionService = inject(TransactionService); 
-  getAllTransactions = inject(GetAllTransactionsUseCase); 
+
+  transactionService = inject(TransactionService);
+  getAllTransactions = inject(GetAllTransactionsUseCase);
+  deleteTransactionUseCase = inject(DeleteTransactionUseCase);
+  updateTransactionUseCase = inject(UpdateTransactionUseCase);
 
   constructor() {
     this.searchSubject
@@ -146,46 +150,46 @@ export class Extract {
   private loadStatement(): void {
     this.getAllTransactions.execute(this.pageIndex, this.pageSize, this.sort, this.order)
       .subscribe((statement: any) => {
-      this.totalItems = statement.result.pagination.totalItems;
-      const itens: Array<any> = statement.result.transactions;
+        this.totalItems = statement.result.pagination.totalItems;
+        const itens: Array<any> = statement.result.transactions;
 
-      this.allTransactions = itens;
+        this.allTransactions = itens;
 
-      this.extractCategories(itens);
+        this.extractCategories(itens);
 
-      const filteredItems = this.applyFiltersToTransactions(itens);
+        const filteredItems = this.applyFiltersToTransactions(itens);
 
-      const grouped = groupBy(filteredItems, (t: Transaction) => {
-        const d = new Date(t.date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
-      });
-
-      const sortedEntries = Object.entries(grouped).sort((a, b) => {
-        const dateA = new Date(a[0] + '-01');
-        const dateB = new Date(b[0] + '-01');
-        return dateB.getTime() - dateA.getTime();
-      });
-
-      this.groupedTransactions = sortedEntries.map(([key, transactions]) => {
-        const sampleDate = new Date(`${key}-01`);
-        const formattedMonth = sampleDate.toLocaleString('pt-BR', {
-          month: 'long',
-          year: 'numeric',
-          timeZone: 'UTC',
+        const grouped = groupBy(filteredItems, (t: Transaction) => {
+          const d = new Date(t.date);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          return `${year}-${month}`;
         });
 
-        return {
-          month: formattedMonth,
-          transactions: transactions as Transaction[],
-        };
-      });
+        const sortedEntries = Object.entries(grouped).sort((a, b) => {
+          const dateA = new Date(a[0] + '-01');
+          const dateB = new Date(b[0] + '-01');
+          return dateB.getTime() - dateA.getTime();
+        });
 
-      if (this.searchTerm) {
-        this.performSearch(this.searchTerm);
-      }
-    });
+        this.groupedTransactions = sortedEntries.map(([key, transactions]) => {
+          const sampleDate = new Date(`${key}-01`);
+          const formattedMonth = sampleDate.toLocaleString('pt-BR', {
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC',
+          });
+
+          return {
+            month: formattedMonth,
+            transactions: transactions as Transaction[],
+          };
+        });
+
+        if (this.searchTerm) {
+          this.performSearch(this.searchTerm);
+        }
+      });
   }
 
   private extractCategories(transactions: Transaction[]): void {
@@ -365,24 +369,32 @@ export class Extract {
         const newFile: File | null = result.file;
         const transactionId = updatedTransactionData.id!;
 
-        this.transactionService
-          .updateTransaction(updatedTransactionData, transactionId)
+        this.updateTransactionUseCase
+          .execute(updatedTransactionData, transactionId)
           .subscribe({
             next: () => {
               if (newFile) {
+                // TODO: Ainda usamos o service antigo para o upload, o que é OK para o MVP
                 this.transactionService
                   .uploadAttachment(transactionId, newFile)
                   .subscribe({
                     next: () => {
-                      this.loadStatement();
+                      this.loadStatement(); // Sucesso total
                     },
-                    error: (err) => console.error("Erro no upload do anexo", err)
+                    error: (err) => {
+                      console.error("Erro no upload do anexo", err)
+                      // TODO: Notificar usuário sobre erro no anexo
+                    }
                   });
               } else {
-                this.loadStatement();
+                this.loadStatement(); // Sucesso (sem anexo)
               }
+              // TODO: Notificar usuário sobre sucesso na atualização
             },
-            error: (err) => console.error("Erro ao atualizar transação", err)
+            error: (err) => {
+              console.error("Erro ao atualizar transação", err)
+              // TODO: Notificar usuário sobre erro na atualização
+            }
           });
       }
     });
@@ -397,7 +409,16 @@ export class Extract {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result === true) {
-        this.transactionService.deleteTransaction(id).subscribe();
+        this.deleteTransactionUseCase.execute(id).subscribe({
+          next: () => {
+            this.loadStatement();
+            // TODO: Disparar uma notificação de sucesso para o usuário
+          },
+          error: (err) => {
+            console.error('Erro ao deletar transação', err);
+            // TODO: Disparar uma notificação de erro para o usuário
+          }
+        });
       }
     });
   }

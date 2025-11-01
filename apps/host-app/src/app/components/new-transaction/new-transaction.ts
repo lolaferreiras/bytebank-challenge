@@ -6,7 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
-import { TransactionService } from '@core/services/transaction';
+import { TransactionService } from '@core/services/transaction'; 
 import { MatCardModule } from '@angular/material/card';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UserService } from '@core/services/user';
@@ -22,6 +22,8 @@ import localePt from '@angular/common/locales/pt';
 import { MatIconModule } from '@angular/material/icon';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+
+import { CreateTransactionUseCase } from '@bytebank-challenge/application';
 
 registerLocaleData(localePt);
 
@@ -52,9 +54,12 @@ registerLocaleData(localePt);
 })
 export class NewTransaction {
   userID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
-  accountID = (inject(UserService) as UserService).loggedInUser?.id ?? 0; //alterar
+  accountID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
+  
   transactionService = inject(TransactionService);
   notificationService = inject(NotificationService);
+  
+  createTransactionUseCase = inject(CreateTransactionUseCase);
 
   transactionType: 'Received' | 'Sent' | null = null;
   amount: number | null = null;
@@ -75,16 +80,16 @@ export class NewTransaction {
   showFileError = false;
 
   constructor() {
-    // Configurar debounce para busca de categoria
     this.descriptionChangeSubject
       .pipe(
-        debounceTime(500), // Aguarda 500ms após o usuário parar de digitar
-        distinctUntilChanged(), // Só executa se o valor mudou
+        debounceTime(500),
+        distinctUntilChanged(),
         switchMap((description) => {
           if (description.trim() && this.transactionType) {
             this.isLoadingCategory = true;
             const type =
               this.transactionType === 'Received' ? 'income' : 'expense';
+            // TODO: AINDA USA O SERVIÇO ANTIGO
             return this.transactionService.getCategorySuggestions(
               description.trim(),
               type
@@ -163,7 +168,7 @@ export class NewTransaction {
       if (file.size > maxSize) {
         this.showFileError = true;
         this.notificationService.showValidationError('file');
-        event.target.value = ''; // Limpar input
+        event.target.value = '';
         return;
       }
 
@@ -216,19 +221,19 @@ export class NewTransaction {
         account: 'Bank Account',
       };
 
-      this.transactionService.createTransaction(transaction).subscribe({
-        next: (response: any) => {
+      this.createTransactionUseCase.execute(transaction).subscribe({
+        next: (response: any) => { // response é 'any'
           this.isSubmitting = false;
           this.notificationService.showSuccessToast(
             'Transação criada com sucesso!'
           );
-          this.resetForm();
-
+          
           const createdTransaction = response.result;
-
 
           if (this.selectedFile && createdTransaction.id) {
             console.log('Iniciando upload do anexo para transação ID:', createdTransaction.id);
+            
+            // TODO: AINDA USA O SERVIÇO ANTIGO
             this.transactionService
               .uploadAttachment(createdTransaction.id, this.selectedFile)
               .subscribe({
