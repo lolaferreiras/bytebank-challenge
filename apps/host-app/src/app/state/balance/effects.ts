@@ -3,7 +3,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import * as BalanceActions from './actions';
 import { TransactionService } from '@core/services/transaction';
-import { BalanceResponse } from '@models/transaction';
+import { BalanceResponse } from '../../../../../../domain/src';
 
 @Injectable()
 export class BalanceEffects {

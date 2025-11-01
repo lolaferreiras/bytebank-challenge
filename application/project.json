@@ -1,0 +1,19 @@
+{
+  "name": "application",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "application/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/application",
+        "main": "application/src/index.ts",
+        "tsConfig": "application/tsconfig.lib.json",
+        "assets": ["application/*.md"]
+      }
+    }
+  }
+}
