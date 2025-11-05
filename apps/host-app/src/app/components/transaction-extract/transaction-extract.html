@@ -1,4 +1,5 @@
 <div class="extract-container" role="region" aria-labelledby="extract-title">
+  
   <div class="header" style="position: relative;">
     <h3 id="extract-title" class="title">Extrato</h3>
     <button mat-icon-button class="filter-button" matTooltip="Filtrar" (click)="openFilterDialog()"
@@ -35,53 +36,83 @@
     </div>
   </div>
 
-  <div *ngFor="let group of groupedTransactions">
-    <h4>{{ group.month }}</h4>
-
-    <div *ngFor="let t of group.transactions" class="transaction" role="listitem"
-      [attr.aria-label]="'Transação de ' + (t.type === 'income' ? 'depósito' : 'transferência') + ' no valor de R$ ' + getPositiveAmount(t.amount)">
-      <mat-icon fontSet="material-symbols-outlined" class="icon" [ngClass]="{ 
-                  income: t.type === 'income', 
-                  expense: t.type === 'expense' 
-                }" [attr.aria-label]="t.type === 'income' ? 'Ícone de depósito' : 'Ícone de transferência'"
-        aria-hidden="true">
-        {{ t.type === "income" ? "call_received" : "call_made" }}
-      </mat-icon>
-
-      <div class="info">
-        <span class="transaction-type">{{ t.type === "income" ? "Depósito" : "Transferência" }}</span>
-        <span class="transaction-description" *ngIf="t.description">{{ t.description }}</span>
-        <span class="transaction-category" *ngIf="t.category">{{ t.category }}</span>
-        <small class="transaction-date">{{ t.date | date : "dd/MM/yyyy" : undefined : "pt-BR" }}</small>
-      </div>
-
-      <div class="amount" [ngClass]="{ 
-          income: t.type === 'income', 
-          expense: t.type === 'expense'
-        }">
-        R$ {{ getPositiveAmount(t.amount) | number : "1.2-2" }}
-      </div>
-
-      <div class="actions" role="group" aria-label="Ações da transação">
-        <button (click)="downloadAttachment(t)" *ngIf="t.anexo?.filename" aria-label="Baixar anexo da transação">
-          <mat-icon class="icon-settings" matTooltip="Download do anexo" fontSet="material-symbols-outlined"
-            aria-hidden="true">download</mat-icon>
-        </button>
-
-        <button (click)="openEditModal(t)" aria-label="Editar transação">
-          <mat-icon class="icon-settings" matTooltip="Editar" fontSet="material-symbols-outlined"
-            aria-hidden="true">edit</mat-icon>
-        </button>
-
-        <button color="warn" (click)="deleteTransaction(t.id!, t.description!)" aria-label="Excluir transação">
-          <mat-icon class="icon-settings" matTooltip="Excluir" fontSet="material-symbols-outlined"
-            aria-hidden="true">delete</mat-icon>
-        </button>
-      </div>
+  <div class="center-container" *ngIf="(status$ | async) === 'loading'">
+    <p>Carregando transações...</p>
     </div>
+
+  <div class="center-container" *ngIf="(status$ | async) === 'error'">
+    <p class="error-message">
+      Ops! Ocorreu um erro ao buscar seu extrato.
+    </p>
   </div>
 
-  <mat-paginator [length]="totalItems" [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" [pageIndex]="0"
-    [hidePageSize]="true" aria-label="Navegação de páginas do extrato" (page)="handlePageEvent($event)">
+  <ng-container *ngIf="(status$ | async) === 'success'">
+    
+    <div
+      class="center-container"
+      *ngIf="groupedTransactions.length === 0; else transactionsList"
+    >
+      <p>Nenhuma transação encontrada.</p>
+    </div>
+
+    <ng-template #transactionsList>
+      <div *ngFor="let group of groupedTransactions">
+        <h4>{{ group.month }}</h4>
+
+        <div *ngFor="let t of group.transactions" class="transaction" role="listitem"
+          [attr.aria-label]="'Transação de ' + (t.type === 'income' ? 'depósito' : 'transferência') + ' no valor de R$ ' + getPositiveAmount(t.amount)">
+          
+          <mat-icon fontSet="material-symbols-outlined" class="icon" [ngClass]="{ 
+                      income: t.type === 'income', 
+                      expense: t.type === 'expense' 
+                    }" [attr.aria-label]="t.type === 'income' ? 'Ícone de depósito' : 'Ícone de transferência'"
+            aria-hidden="true">
+            {{ t.type === "income" ? "call_received" : "call_made" }}
+          </mat-icon>
+
+          <div class="info">
+            <span class="transaction-type">{{ t.type === "income" ? "Depósito" : "Transferência" }}</span>
+            <span class="transaction-description" *ngIf="t.description">{{ t.description }}</span>
+            <span class="transaction-category" *ngIf="t.category">{{ t.category }}</span>
+            <small class="transaction-date">{{ t.date | date : "dd/MM/yyyy" : undefined : "pt-BR" }}</small>
+          </div>
+
+          <div class="amount" [ngClass]="{ 
+              income: t.type === 'income', 
+              expense: t.type === 'expense'
+            }">
+            R$ {{ getPositiveAmount(t.amount) | number : "1.2-2" }}
+          </div>
+
+          <div class="actions" role="group" aria-label="Ações da transação">
+            <button (click)="downloadAttachment(t)" *ngIf="t.anexo?.filename" aria-label="Baixar anexo da transação">
+              <mat-icon class="icon-settings" matTooltip="Download do anexo" fontSet="material-symbols-outlined"
+                aria-hidden="true">download</mat-icon>
+            </button>
+
+            <button (click)="openEditModal(t)" aria-label="Editar transação">
+              <mat-icon class="icon-settings" matTooltip="Editar" fontSet="material-symbols-outlined"
+                aria-hidden="true">edit</mat-icon>
+            </button>
+
+            <button color="warn" (click)="deleteTransaction(t.id!, t.description ?? 'transação')" aria-label="Excluir transação">
+              <mat-icon class="icon-settings" matTooltip="Excluir" fontSet="material-symbols-outlined"
+                aria-hidden="true">delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <mat-paginator 
+    [length]="(totalItems$ | async) || 0" 
+    [pageSize]="pageSize" 
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="pageSizeOptions" 
+    [hidePageSize]="false" 
+    aria-label="Navegação de páginas do extrato"
+    (page)="handlePageEvent($event)">
   </mat-paginator>
+
 </div>
