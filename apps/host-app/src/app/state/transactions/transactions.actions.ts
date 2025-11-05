@@ -1,10 +1,9 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { Transaction } from '@bytebank-challenge/domain'; // Importe seu modelo
+import { Transaction } from '@bytebank-challenge/domain';
 
 export const TransactionsActions = createActionGroup({
   source: 'Transactions Page',
   events: {
-    // ---- LOAD (Existente) ----
     'Load Transactions': props<{
       page: number;
       limit: number;
@@ -12,20 +11,17 @@ export const TransactionsActions = createActionGroup({
       order: string;
     }>(),
     
-    // ---- CREATE (Novo) ----
     'Create Transaction': props<{
       transaction: Transaction;
-      file: File | null; // Incluímos o anexo aqui
+      file: File | null;
     }>(),
 
-    // ---- UPDATE (Novo) ----
     'Update Transaction': props<{
       transactionId: number;
       transaction: Partial<Transaction>;
-      file: File | null; // Incluímos o anexo aqui
+      file: File | null;
     }>(),
 
-    // ---- DELETE (Novo) ----
     'Delete Transaction': props<{ transactionId: number }>(),
   },
 });
@@ -33,20 +29,16 @@ export const TransactionsActions = createActionGroup({
 export const TransactionsApiActions = createActionGroup({
   source: 'Transactions API',
   events: {
-    // ---- LOAD (Existente) ----
     'Load Transactions Success': props<{ response: any }>(),
     'Load Transactions Failure': props<{ error: any }>(),
     
-    // ---- CREATE (Existente/Novo) ----
     'Create Transaction Success': emptyProps(),
-    'Create Transaction Failure': props<{ error: any }>(), // Ação de falha
+    'Create Transaction Failure': props<{ error: any }>(),
 
-    // ---- UPDATE (Existente/Novo) ----
     'Update Transaction Success': emptyProps(),
-    'Update Transaction Failure': props<{ error: any }>(), // Ação de falha
+    'Update Transaction Failure': props<{ error: any }>(),
 
-    // ---- DELETE (Existente/Novo) ----
     'Delete Transaction Success': emptyProps(),
-    'Delete Transaction Failure': props<{ error: any }>(), // Ação de falha
+    'Delete Transaction Failure': props<{ error: any }>(),
   },
 });

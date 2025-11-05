@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-// O TransactionService ainda é necessário para o download
 import { TransactionService } from '@core/services/transaction'; 
 import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
@@ -25,19 +24,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { FormsModule } from '@angular/forms';
 
-// Importações do NgRx
 import { Store } from '@ngrx/store';
 import {
   selectTransactions,
   selectTotalItems,
   selectStatus,
 } from '../../state/transactions/transactions.reducer';
-// IMPORTANTE: Importar o 'TransactionsActions'
 import { TransactionsActions } from '../../state/transactions/transactions.actions';
 
 @Injectable()
 export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
-  // ... (código do PaginatorIntl inalterado) ...
   override itemsPerPageLabel = 'Itens por página';
   override nextPageLabel = 'Próxima página';
   override previousPageLabel = 'Página anterior';
@@ -77,7 +73,6 @@ export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
   styleUrl: './transaction-extract.scss',
 })
 export class TransactionExtract implements OnInit {
-  // ... (propriedades inalteradas) ...
   groupedTransactions: { month: string; transactions: Transaction[] }[] = [];
   pageSize = 10;
   pageIndex = 0; 
@@ -87,20 +82,17 @@ export class TransactionExtract implements OnInit {
   order = 'desc';
   showFilter = false;
 
-  // Injeções
   private store = inject(Store);
   transactionService = inject(TransactionService); // AINDA USADO PARA downloadAttachment
   dialog = inject(MatDialog);
   elementRef = inject(ElementRef);
 
-  // Seletores do NgRx
   transactions$ = this.store.select(selectTransactions);
   totalItems$ = this.store.select(selectTotalItems);
   status$ = this.store.select(selectStatus);
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {
-    // ... (código do listener inalterado) ...
     const target = event.target as HTMLElement;
 
     const clickedInsideComponent = this.elementRef.nativeElement.contains(target);
@@ -122,7 +114,6 @@ export class TransactionExtract implements OnInit {
   private groupTransactions(
     transactions: Transaction[]
   ): { month: string; transactions: Transaction[] }[] {
-    // ... (código de agrupar inalterado) ...
     if (!transactions || transactions.length === 0) {
       return [];
     }
@@ -156,7 +147,6 @@ export class TransactionExtract implements OnInit {
   }
 
   private loadTransactions(): void {
-    // ... (código inalterado) ...
     this.store.dispatch(
       TransactionsActions.loadTransactions({
         page: this.pageIndex + 1,
@@ -168,7 +158,6 @@ export class TransactionExtract implements OnInit {
   }
 
   handlePageEvent(e: PageEvent) {
-    // ... (código inalterado) ...
     this.pageEvent = e;
     this.pageSize = e.pageSize;
     this.pageIndex = e.pageIndex;
@@ -194,9 +183,7 @@ export class TransactionExtract implements OnInit {
     return t.type === 'income' ? 'call_received' : 'call_made';
   }
 
-  // --- MÉTODO DE DOWNLOAD (Inalterado) ---
   downloadAttachment(transaction: Transaction): void {
-    // ... (código inalterado, ainda usa o transactionService) ...
     if (!transaction.anexo || !transaction.anexo.filename) {
       console.error('Esta transação não possui anexo para download.');
       return;
@@ -223,7 +210,6 @@ export class TransactionExtract implements OnInit {
     });
   }
 
-  // --- MÉTODO DE EDITAR (Refatorado para NgRx) ---
   openEditModal(transaction: Transaction): void {
     const dialogRef = this.dialog.open(EditTransactionModal, {
       data: { transaction },
@@ -237,8 +223,6 @@ export class TransactionExtract implements OnInit {
         const newFile: File | null = result.file;
         const transactionId = updatedTransactionData.id!;
 
-        // Dispara UMA ação. O Effect 'updateTransaction$' tratará
-        // tanto da atualização dos dados quanto do upload do anexo.
         this.store.dispatch(
           TransactionsActions.updateTransaction({
             transactionId: transactionId,
@@ -253,7 +237,6 @@ export class TransactionExtract implements OnInit {
     });
   }
 
-  // --- MÉTODO DE ELIMINAR (Refatorado para NgRx) ---
   deleteTransaction(id: number, description: string): void {
     const dialogRef = this.dialog.open(ConfirmDeleteDialog, {
       data: { description },
@@ -263,9 +246,6 @@ export class TransactionExtract implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result === true) {
-        // Dispara a ação de eliminar.
-        // O Effect 'deleteTransaction$' tratará da chamada ao UseCase.
-        // O Effect 'reloadAfterCUD$' tratará de recarregar a lista.
         this.store.dispatch(
           TransactionsActions.deleteTransaction({ transactionId: id })
         );

@@ -1,6 +1,5 @@
 import { createFeature, createReducer, on } from '@ngrx/store';
 import { Transaction } from '@bytebank-challenge/domain';
-// Importe AMBOS os grupos de ações
 import {
   TransactionsActions,
   TransactionsApiActions,
@@ -29,7 +28,6 @@ export const transactionsFeature = createFeature({
   reducer: createReducer(
     initialState,
 
-    // Ouve a ação 'loadTransactions' do 'TransactionsActions'
     on(TransactionsActions.loadTransactions, (state, { page, limit }) => ({
       ...state,
       status: 'loading' as const,
@@ -37,7 +35,6 @@ export const transactionsFeature = createFeature({
       pageSize: limit,
     })),
 
-    // CORREÇÃO: Ouve a ação 'loadTransactionsSuccess' do 'TransactionsApiActions'
     on(TransactionsApiActions.loadTransactionsSuccess, (state, { response }) => ({
       ...state,
       status: 'success' as const,
@@ -46,7 +43,6 @@ export const transactionsFeature = createFeature({
       error: null,
     })),
 
-    // CORREÇÃO: Ouve a ação 'loadTransactionsFailure' do 'TransactionsApiActions'
     on(TransactionsApiActions.loadTransactionsFailure, (state, { error }) => ({
       ...state,
       status: 'error' as const,

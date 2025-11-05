@@ -12,38 +12,30 @@ import {
   DeleteTransactionUseCase,
   GetAllTransactionsUseCase,
   UpdateTransactionUseCase,
-  // TODO: Precisamos de um UseCase para 'UploadAttachment'
 } from '@bytebank-challenge/application';
 
-// Importe o 'loadBalance' do state de balance
 import { loadBalance } from '../balance/actions';
-// Importe o TransactionService antigo (para o upload, por enquanto)
 import { TransactionService } from '@core/services/transaction';
 
 @Injectable()
 export class TransactionEffects {
   private actions$ = inject(Actions);
 
-  // Use Cases
   private getAllTransactionsUseCase = inject(GetAllTransactionsUseCase);
   private createTransactionUseCase = inject(CreateTransactionUseCase);
   private updateTransactionUseCase = inject(UpdateTransactionUseCase);
   private deleteTransactionUseCase = inject(DeleteTransactionUseCase);
 
-  // Service antigo (apenas para upload, por enquanto)
   private transactionService = inject(TransactionService);
 
-  // --- LOAD EFFECT (Corrigido) ---
   loadTransactions$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(TransactionsActions.loadTransactions),
       switchMap(({ page, limit, sort, order }) =>
         this.getAllTransactionsUseCase.execute(page, limit, sort, order).pipe(
-          // CORREÇÃO: Dispara a ação do 'TransactionsApiActions'
           map((response) =>
             TransactionsApiActions.loadTransactionsSuccess({ response })
           ),
-          // CORREÇÃO: Dispara a ação do 'TransactionsApiActions'
           catchError((error) =>
             of(TransactionsApiActions.loadTransactionsFailure({ error }))
           )
@@ -52,7 +44,6 @@ export class TransactionEffects {
     );
   });
 
-  // --- CREATE EFFECT (Novo) ---
   createTransaction$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(TransactionsActions.createTransaction),
@@ -60,7 +51,6 @@ export class TransactionEffects {
         this.createTransactionUseCase.execute(transaction).pipe(
           concatMap((response: any) => {
             const createdTransactionId = response.result.id;
-            // Se tiver anexo, faz o upload
             if (file && createdTransactionId) {
               return this.transactionService
                 .uploadAttachment(createdTransactionId, file)
@@ -75,7 +65,6 @@ export class TransactionEffects {
                   )
                 );
             }
-            // Se não tiver anexo, apenas retorna sucesso
             return of(TransactionsApiActions.createTransactionSuccess());
           }),
           catchError((error) =>
@@ -86,7 +75,6 @@ export class TransactionEffects {
     );
   });
 
-  // --- UPDATE EFFECT (Novo) ---
   updateTransaction$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(TransactionsActions.updateTransaction),
@@ -95,7 +83,6 @@ export class TransactionEffects {
           .execute(transaction, transactionId)
           .pipe(
             concatMap(() => {
-              // Se tiver anexo, faz o upload
               if (file && transactionId) {
                 return this.transactionService
                   .uploadAttachment(transactionId, file)
@@ -112,7 +99,6 @@ export class TransactionEffects {
                     )
                   );
               }
-              // Se não tiver anexo, apenas retorna sucesso
               return of(TransactionsApiActions.updateTransactionSuccess());
             }),
             catchError((error) =>
@@ -123,7 +109,6 @@ export class TransactionEffects {
     );
   });
 
-  // --- DELETE EFFECT (Novo) ---
   deleteTransaction$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(TransactionsActions.deleteTransaction),
@@ -138,8 +123,6 @@ export class TransactionEffects {
     );
   });
 
-  // --- RELOAD (Existente e Corrigido) ---
-  // Recarrega a lista E o saldo após qualquer CUD
   reloadAfterCUD$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(
@@ -148,8 +131,8 @@ export class TransactionEffects {
         TransactionsApiActions.deleteTransactionSuccess
       ),
       concatMap(() => [
-        loadBalance(), // Recarrega o saldo
-        TransactionsActions.loadTransactions({ // Recarrega as transações
+        loadBalance(),
+        TransactionsActions.loadTransactions({
           page: 1, // TODO: Usar a página atual do state
           limit: 10, // TODO: Usar o limit atual do state
           sort: 'date',
