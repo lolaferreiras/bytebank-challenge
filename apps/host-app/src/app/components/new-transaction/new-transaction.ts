@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
-import { TransactionService } from '@core/services/transaction'; 
+import { TransactionService } from '@core/services/transaction';
 import { MatCardModule } from '@angular/material/card';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UserService } from '@core/services/user';
@@ -20,10 +20,20 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { MatIconModule } from '@angular/material/icon';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  takeUntil,
+} from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
-import { CreateTransactionUseCase } from '@bytebank-challenge/application';
+import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
+import {
+  TransactionsActions,
+  TransactionsApiActions,
+} from '../../state/transactions/transactions.actions';
 
 registerLocaleData(localePt);
 
@@ -52,14 +62,15 @@ registerLocaleData(localePt);
   templateUrl: './new-transaction.html',
   styleUrl: './new-transaction.scss',
 })
-export class NewTransaction {
+export class NewTransaction implements OnDestroy {
   userID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
   accountID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
-  
+
   transactionService = inject(TransactionService);
   notificationService = inject(NotificationService);
-  
-  createTransactionUseCase = inject(CreateTransactionUseCase);
+
+  private store = inject(Store);
+  private actions$ = inject(Actions);
 
   transactionType: 'Received' | 'Sent' | null = null;
   amount: number | null = null;
@@ -72,6 +83,7 @@ export class NewTransaction {
   isLoadingCategory = false;
   isSubmitting = false;
   private descriptionChangeSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   showTypeError = false;
   showAmountError = false;
@@ -89,14 +101,14 @@ export class NewTransaction {
             this.isLoadingCategory = true;
             const type =
               this.transactionType === 'Received' ? 'income' : 'expense';
-            // TODO: AINDA USA O SERVIÇO ANTIGO
             return this.transactionService.getCategorySuggestions(
               description.trim(),
               type
             );
           }
           return [];
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (response) => {
@@ -110,6 +122,35 @@ export class NewTransaction {
           console.error('Erro ao buscar categoria:', error);
         },
       });
+
+    this.actions$
+      .pipe(
+        ofType(TransactionsApiActions.createTransactionSuccess),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.isSubmitting = false;
+        this.notificationService.showSuccessToast(
+          'Transação criada com sucesso!'
+        );
+        this.resetForm();
+      });
+
+    this.actions$
+      .pipe(
+        ofType(TransactionsApiActions.createTransactionFailure),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(({ error }) => {
+        this.isSubmitting = false;
+        console.error('Erro ao criar transação:', error);
+        this.notificationService.showTransactionError(error);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onDescriptionChange() {
@@ -221,46 +262,13 @@ export class NewTransaction {
         account: 'Bank Account',
       };
 
-      this.createTransactionUseCase.execute(transaction).subscribe({
-        next: (response: any) => { // response é 'any'
-          this.isSubmitting = false;
-          this.notificationService.showSuccessToast(
-            'Transação criada com sucesso!'
-          );
-          
-          const createdTransaction = response.result;
+      this.store.dispatch(
+        TransactionsActions.createTransaction({
+          transaction: transaction,
+          file: this.selectedFile,
+        })
+      );
 
-          if (this.selectedFile && createdTransaction.id) {
-            console.log('Iniciando upload do anexo para transação ID:', createdTransaction.id);
-            
-            // TODO: AINDA USA O SERVIÇO ANTIGO
-            this.transactionService
-              .uploadAttachment(createdTransaction.id, this.selectedFile)
-              .subscribe({
-                next: () => {
-                  this.notificationService.showInfoToast(
-                    'Anexo enviado com sucesso!'
-                  );
-                  this.selectedFile = null;
-                  this.selectedFileName = null;
-                  this.resetForm();
-                },
-                error: (err) => {
-                  console.error('Erro no upload do anexo:', err);
-                  this.notificationService.showUploadError(err);
-                  this.resetForm();
-                },
-              });
-          } else {
-            this.resetForm();
-          }
-        },
-        error: (err) => {
-          console.error('Erro ao criar transação:', err);
-          this.isSubmitting = false;
-          this.notificationService.showTransactionError(err);
-        },
-      });
     }
   }
 
