@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { TransactionService } from '@core/services/transaction'; 
 import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 import { EditTransactionModal } from '@components/edit-transaction-modal/edit-transaction-modal';
@@ -31,6 +30,7 @@ import {
   selectStatus,
 } from '../../state/transactions/transactions.reducer';
 import { TransactionsActions } from '../../state/transactions/transactions.actions';
+import { DownloadAttachmentUseCase } from '@bytebank-challenge/application';
 
 @Injectable()
 export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
@@ -83,7 +83,7 @@ export class TransactionExtract implements OnInit {
   showFilter = false;
 
   private store = inject(Store);
-  transactionService = inject(TransactionService); // AINDA USADO PARA downloadAttachment
+  private downloadAttachmentUseCase = inject(DownloadAttachmentUseCase);
   dialog = inject(MatDialog);
   elementRef = inject(ElementRef);
 
@@ -192,7 +192,7 @@ export class TransactionExtract implements OnInit {
     const filename = transaction.anexo.filename;
     const originalName = transaction.anexo.originalName || filename;
 
-    this.transactionService.downloadAttachment(filename).subscribe({
+    this.downloadAttachmentUseCase.execute(filename).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

@@ -49,5 +49,34 @@ export class TransactionApiService implements ITransactionRepository {
     const url = `${this.apiUrl}/account/transaction`;
     return this.http.post<any>(url, transaction);
   }
+
+  uploadAttachment(
+    transactionId: number | string,
+    file: File
+  ): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    const url = `${this.apiUrl}/account/transaction/${transactionId}/attachment`;
+
+    return this.http.post(url, formData);
+  }
+
+  downloadAttachment(filename: string): Observable<Blob> {
+    const url = `${this.apiUrl}/account/transaction/attachment/${filename}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  getCategorySuggestions(
+    description: string,
+    type: 'income' | 'expense'
+  ): Observable<any> {
+    const params = new HttpParams()
+      .set('description', description)
+      .set('type', type);
+
+    const url = `${this.apiUrl}/account/category-suggestions`;
+    return this.http.get<any>(url, { params });
+  }
 }
 

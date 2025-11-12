@@ -12,10 +12,10 @@ import {
   DeleteTransactionUseCase,
   GetAllTransactionsUseCase,
   UpdateTransactionUseCase,
+  UploadAttachmentUseCase,
 } from '@bytebank-challenge/application';
 
 import { loadBalance } from '../balance/actions';
-import { TransactionService } from '@core/services/transaction';
 
 @Injectable()
 export class TransactionEffects {
@@ -25,8 +25,7 @@ export class TransactionEffects {
   private createTransactionUseCase = inject(CreateTransactionUseCase);
   private updateTransactionUseCase = inject(UpdateTransactionUseCase);
   private deleteTransactionUseCase = inject(DeleteTransactionUseCase);
-
-  private transactionService = inject(TransactionService);
+  private uploadAttachmentUseCase = inject(UploadAttachmentUseCase);
 
   loadTransactions$ = createEffect(() => {
     return this.actions$.pipe(
@@ -52,8 +51,8 @@ export class TransactionEffects {
           concatMap((response: any) => {
             const createdTransactionId = response.result.id;
             if (file && createdTransactionId) {
-              return this.transactionService
-                .uploadAttachment(createdTransactionId, file)
+              return this.uploadAttachmentUseCase
+                .execute(createdTransactionId, file)
                 .pipe(
                   map(() =>
                     TransactionsApiActions.createTransactionSuccess()
@@ -84,8 +83,8 @@ export class TransactionEffects {
           .pipe(
             concatMap(() => {
               if (file && transactionId) {
-                return this.transactionService
-                  .uploadAttachment(transactionId, file)
+                return this.uploadAttachmentUseCase
+                  .execute(transactionId, file)
                   .pipe(
                     map(() =>
                       TransactionsApiActions.updateTransactionSuccess()

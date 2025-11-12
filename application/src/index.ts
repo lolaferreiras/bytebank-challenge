@@ -4,3 +4,6 @@ export * from './lib/use-cases/get-all-transactions.use-case';
 export * from './lib/use-cases/delete-transaction.use-case';
 export * from './lib/use-cases/update-transaction.use-case';
 export * from './lib/use-cases/create-transaction.use-case';
+export * from './lib/use-cases/upload-attachment.use-case';
+export * from './lib/use-cases/download-attachment.use-case';
+export * from './lib/use-cases/get-category-suggestions.use-case';

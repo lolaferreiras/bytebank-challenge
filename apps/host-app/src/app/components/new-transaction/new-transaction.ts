@@ -6,7 +6,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
-import { TransactionService } from '@core/services/transaction';
 import { MatCardModule } from '@angular/material/card';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 import { UserService } from '@core/services/user';
@@ -34,6 +33,7 @@ import {
   TransactionsActions,
   TransactionsApiActions,
 } from '../../state/transactions/transactions.actions';
+import { GetCategorySuggestionsUseCase } from '@bytebank-challenge/application';
 
 registerLocaleData(localePt);
 
@@ -66,11 +66,11 @@ export class NewTransaction implements OnDestroy {
   userID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
   accountID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
 
-  transactionService = inject(TransactionService);
   notificationService = inject(NotificationService);
 
   private store = inject(Store);
   private actions$ = inject(Actions);
+  private getCategorySuggestionsUseCase = inject(GetCategorySuggestionsUseCase);
 
   transactionType: 'Received' | 'Sent' | null = null;
   amount: number | null = null;
@@ -101,7 +101,7 @@ export class NewTransaction implements OnDestroy {
             this.isLoadingCategory = true;
             const type =
               this.transactionType === 'Received' ? 'income' : 'expense';
-            return this.transactionService.getCategorySuggestions(
+            return this.getCategorySuggestionsUseCase.execute(
               description.trim(),
               type
             );

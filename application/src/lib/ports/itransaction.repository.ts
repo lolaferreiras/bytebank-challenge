@@ -19,4 +19,16 @@ export abstract class ITransactionRepository {
   abstract createTransaction(
     transaction: Partial<Transaction>
   ): Observable<any>;
+
+  abstract uploadAttachment(
+    transactionId: number | string,
+    file: File
+  ): Observable<any>;
+
+  abstract downloadAttachment(filename: string): Observable<Blob>;
+
+  abstract getCategorySuggestions(
+    description: string,
+    type: 'income' | 'expense'
+  ): Observable<any>;
 }
