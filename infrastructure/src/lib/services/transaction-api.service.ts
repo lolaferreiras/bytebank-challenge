@@ -78,5 +78,11 @@ export class TransactionApiService implements ITransactionRepository {
     const url = `${this.apiUrl}/account/category-suggestions`;
     return this.http.get<any>(url, { params });
   }
+
+  getBalance(): Observable<any> {
+    const userId = localStorage.getItem('userId');
+    const url = `${this.apiUrl}/account/balance/${userId}`;
+    return this.http.get<any>(url, {});
+  }
 }
 

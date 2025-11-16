@@ -1,14 +1,25 @@
-import { Component, ElementRef, HostListener, inject, Injectable } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  Injectable,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { TransactionService } from '@core/services/transaction';
 import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
 import { EditTransactionModal } from '@components/edit-transaction-modal/edit-transaction-modal';
 import { ConfirmDeleteDialog } from '@components/confirm-delete-dialog/confirm-delete-dialog';
 import { Transaction } from '@bytebank-challenge/domain';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+  PageEvent,
+} from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { FormsModule } from '@angular/forms';
@@ -18,11 +29,21 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 
-import { GetAllTransactionsUseCase } from '@bytebank-challenge/application';
-import { DeleteTransactionUseCase } from '@bytebank-challenge/application';
-import { UpdateTransactionUseCase } from '@bytebank-challenge/application';
+import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
+import {
+  selectStatus,
+  selectTotalItems,
+  selectTransactions,
+} from '../../state/transactions/transactions.reducer';
+import {
+  TransactionsActions,
+  TransactionsApiActions,
+} from '../../state/transactions/transactions.actions';
+
+import { DownloadAttachmentUseCase } from '@bytebank-challenge/application';
 
 @Injectable()
 export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
@@ -32,7 +53,11 @@ export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
   override firstPageLabel = 'Primeira página';
   override lastPageLabel = 'Última página';
 
-  override getRangeLabel = (page: number, pageSize: number, length: number): string => {
+  override getRangeLabel = (
+    page: number,
+    pageSize: number,
+    length: number
+  ): string => {
     const totalPages = Math.ceil(length / pageSize);
     const currentPage = page + 1;
 
@@ -72,28 +97,29 @@ interface FilterOptions {
     MatButtonModule,
     MatCheckboxModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
   ],
   providers: [{ provide: MatPaginatorIntl, useClass: MatPaginatorIntlPtBr }],
   templateUrl: './extract.html',
   styleUrl: './extract.scss',
 })
-export class Extract {
+export class Extract implements OnInit, OnDestroy {
   groupedTransactions: { month: string; transactions: Transaction[] }[] = [];
   filteredTransactions: Transaction[] = [];
   allTransactions: Transaction[] = [];
-  length = 50;
+  availableCategories: string[] = [];
+  
   pageSize = 10;
-  pageIndex = 1;
+  pageIndex = 0;
   pageSizeOptions = [5, 10, 25];
   pageEvent!: PageEvent;
-  totalItems = 1;
   sort = 'date';
   order = 'desc';
   showFilter = false;
   searchTerm = '';
-  availableCategories: string[] = [];
+  
   private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   filters: FilterOptions = {
     income: true,
@@ -104,36 +130,56 @@ export class Extract {
     maxAmount: null,
     category: '',
     hasAttachment: false,
-    noAttachment: false
+    noAttachment: false,
   };
 
   dialog = inject(MatDialog);
   elementRef = inject(ElementRef);
+  private store = inject(Store);
+  private actions$ = inject(Actions);
+  private downloadAttachmentUseCase = inject(DownloadAttachmentUseCase);
 
-  transactionService = inject(TransactionService);
-  getAllTransactions = inject(GetAllTransactionsUseCase);
-  deleteTransactionUseCase = inject(DeleteTransactionUseCase);
-  updateTransactionUseCase = inject(UpdateTransactionUseCase);
+  private transactions$ = this.store.select(selectTransactions);
+  totalItems$ = this.store.select(selectTotalItems);
+  status$ = this.store.select(selectStatus);
 
   constructor() {
     this.searchSubject
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(searchTerm => {
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((searchTerm) => {
         this.performSearch(searchTerm);
+      });
+
+    this.actions$
+      .pipe(
+        ofType(
+          TransactionsApiActions.updateTransactionSuccess,
+          TransactionsApiActions.deleteTransactionSuccess
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        console.log('Ação de CUD concluída com sucesso');
+      });
+
+    this.actions$
+      .pipe(
+        ofType(
+          TransactionsApiActions.updateTransactionFailure,
+          TransactionsApiActions.deleteTransactionFailure
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(({ error }) => {
+        console.error('Falha na operação de CUD', error);
       });
   }
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {
-    // ... (código do HostListener inalterado) ...
     const target = event.target as HTMLElement;
-
     const clickedInsideComponent = this.elementRef.nativeElement.contains(target);
     const clickedOnOverlay = target.closest('.cdk-overlay-pane');
-
     if (!clickedInsideComponent && !clickedOnOverlay) {
       this.showFilter = false;
     }
@@ -142,54 +188,65 @@ export class Extract {
   ngOnInit(): void {
     this.loadStatement();
 
-    this.transactionService.transactionsChanged$.subscribe(() => {
-      this.loadStatement();
+    this.transactions$.pipe(takeUntil(this.destroy$)).subscribe((itens) => {
+      this.allTransactions = itens;
+      this.extractCategories(itens);
+      
+      const filteredItems = this.applyFiltersToTransactions(itens);
+      this.groupedTransactions = this.groupAndSortTransactions(filteredItems);
+
+      if (this.searchTerm) {
+        this.performSearch(this.searchTerm);
+      }
     });
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.searchSubject.complete();
+  }
+
   private loadStatement(): void {
-    this.getAllTransactions.execute(this.pageIndex, this.pageSize, this.sort, this.order)
-      .subscribe((statement: any) => {
-        this.totalItems = statement.result.pagination.totalItems;
-        const itens: Array<any> = statement.result.transactions;
+    this.store.dispatch(
+      TransactionsActions.loadTransactions({
+        page: this.pageIndex + 1,
+        limit: this.pageSize,
+        sort: this.sort,
+        order: this.order,
+      })
+    );
+  }
 
-        this.allTransactions = itens;
+  private groupAndSortTransactions(
+    transactions: Transaction[]
+  ): { month: string; transactions: Transaction[] }[] {
+    const grouped = groupBy(transactions, (t: Transaction) => {
+      const d = new Date(t.date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${year}-${month}`;
+    });
 
-        this.extractCategories(itens);
+    const sortedEntries = Object.entries(grouped).sort((a, b) => {
+      const dateA = new Date(a[0] + '-01');
+      const dateB = new Date(b[0] + '-01');
+      return dateB.getTime() - dateA.getTime();
+    });
 
-        const filteredItems = this.applyFiltersToTransactions(itens);
-
-        const grouped = groupBy(filteredItems, (t: Transaction) => {
-          const d = new Date(t.date);
-          const year = d.getFullYear();
-          const month = String(d.getMonth() + 1).padStart(2, '0');
-          return `${year}-${month}`;
-        });
-
-        const sortedEntries = Object.entries(grouped).sort((a, b) => {
-          const dateA = new Date(a[0] + '-01');
-          const dateB = new Date(b[0] + '-01');
-          return dateB.getTime() - dateA.getTime();
-        });
-
-        this.groupedTransactions = sortedEntries.map(([key, transactions]) => {
-          const sampleDate = new Date(`${key}-01`);
-          const formattedMonth = sampleDate.toLocaleString('pt-BR', {
-            month: 'long',
-            year: 'numeric',
-            timeZone: 'UTC',
-          });
-
-          return {
-            month: formattedMonth,
-            transactions: transactions as Transaction[],
-          };
-        });
-
-        if (this.searchTerm) {
-          this.performSearch(this.searchTerm);
-        }
+    return sortedEntries.map(([key, transactions]) => {
+      const sampleDate = new Date(`${key}-01`);
+      const formattedMonth = sampleDate.toLocaleString('pt-BR', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
       });
+
+      return {
+        month: formattedMonth,
+        transactions: transactions as Transaction[],
+      };
+    });
   }
 
   private extractCategories(transactions: Transaction[]): void {
@@ -206,32 +263,25 @@ export class Extract {
     return transactions.filter(transaction => {
       if (!this.filters.income && transaction.type === 'income') return false;
       if (!this.filters.expense && transaction.type === 'expense') return false;
-
       if (this.filters.startDate) {
         const transactionDate = new Date(transaction.date);
         if (transactionDate < this.filters.startDate) return false;
       }
-
       if (this.filters.endDate) {
         const transactionDate = new Date(transaction.date);
         if (transactionDate > this.filters.endDate) return false;
       }
-
       if (this.filters.minAmount !== null && Math.abs(transaction.amount) < this.filters.minAmount) {
         return false;
       }
-
       if (this.filters.maxAmount !== null && Math.abs(transaction.amount) > this.filters.maxAmount) {
         return false;
       }
-
       if (this.filters.category && transaction.category !== this.filters.category) {
         return false;
       }
-
       if (this.filters.hasAttachment && !transaction.anexo?.filename) return false;
       if (this.filters.noAttachment && transaction.anexo?.filename) return false;
-
       return true;
     });
   }
@@ -245,32 +295,26 @@ export class Extract {
       this.filteredTransactions = [];
       return;
     }
-
     const term = searchTerm.toLowerCase().trim();
     this.filteredTransactions = this.allTransactions.filter(transaction => {
       if (transaction.description && transaction.description.toLowerCase().includes(term)) {
         return true;
       }
-
       if (transaction.category && transaction.category.toLowerCase().includes(term)) {
         return true;
       }
-
       const typeText = transaction.type === 'income' ? 'depósito' : 'transferência';
       if (typeText.includes(term)) {
         return true;
       }
-
       const amountText = `R$ ${Math.abs(transaction.amount).toFixed(2).replace('.', ',')}`;
       if (amountText.includes(term)) {
         return true;
       }
-
       const dateText = new Date(transaction.date).toLocaleDateString('pt-BR');
       if (dateText.includes(term)) {
         return true;
       }
-
       return false;
     });
   }
@@ -309,9 +353,8 @@ export class Extract {
 
   handlePageEvent(e: PageEvent) {
     this.pageEvent = e;
-    this.length = e.length;
     this.pageSize = e.pageSize;
-    this.pageIndex = e.pageIndex + 1;
+    this.pageIndex = e.pageIndex;
     this.loadStatement();
   }
 
@@ -332,27 +375,24 @@ export class Extract {
       console.error('Esta transação não possui anexo para download.');
       return;
     }
-
     const filename = transaction.anexo.filename;
     const originalName = transaction.anexo.originalName || filename;
 
-    this.transactionService.downloadAttachment(filename).subscribe({
+    this.downloadAttachmentUseCase.execute(filename).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
-
         const a = document.createElement('a');
         document.body.appendChild(a);
         a.style.display = 'none';
         a.href = url;
         a.download = originalName;
         a.click();
-
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       },
       error: (err) => {
         console.error('Erro ao baixar o anexo:', err);
-      }
+      },
     });
   }
 
@@ -360,7 +400,7 @@ export class Extract {
     const dialogRef = this.dialog.open(EditTransactionModal, {
       data: { transaction },
       width: '700px',
-      height: '500px'
+      height: '500px',
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -369,33 +409,13 @@ export class Extract {
         const newFile: File | null = result.file;
         const transactionId = updatedTransactionData.id!;
 
-        this.updateTransactionUseCase
-          .execute(updatedTransactionData, transactionId)
-          .subscribe({
-            next: () => {
-              if (newFile) {
-                // TODO: Ainda usamos o service antigo para o upload, o que é OK para o MVP
-                this.transactionService
-                  .uploadAttachment(transactionId, newFile)
-                  .subscribe({
-                    next: () => {
-                      this.loadStatement(); // Sucesso total
-                    },
-                    error: (err) => {
-                      console.error("Erro no upload do anexo", err)
-                      // TODO: Notificar usuário sobre erro no anexo
-                    }
-                  });
-              } else {
-                this.loadStatement(); // Sucesso (sem anexo)
-              }
-              // TODO: Notificar usuário sobre sucesso na atualização
-            },
-            error: (err) => {
-              console.error("Erro ao atualizar transação", err)
-              // TODO: Notificar usuário sobre erro na atualização
-            }
-          });
+        this.store.dispatch(
+          TransactionsActions.updateTransaction({
+            transactionId: transactionId,
+            transaction: updatedTransactionData,
+            file: newFile,
+          })
+        );
       }
     });
   }
@@ -404,21 +424,14 @@ export class Extract {
     const dialogRef = this.dialog.open(ConfirmDeleteDialog, {
       data: { description },
       width: '300px',
-      height: '200px'
+      height: '200px',
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result === true) {
-        this.deleteTransactionUseCase.execute(id).subscribe({
-          next: () => {
-            this.loadStatement();
-            // TODO: Disparar uma notificação de sucesso para o usuário
-          },
-          error: (err) => {
-            console.error('Erro ao deletar transação', err);
-            // TODO: Disparar uma notificação de erro para o usuário
-          }
-        });
+        this.store.dispatch(
+          TransactionsActions.deleteTransaction({ transactionId: id })
+        );
       }
     });
   }

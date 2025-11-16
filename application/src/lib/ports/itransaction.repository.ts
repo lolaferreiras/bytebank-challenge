@@ -31,4 +31,6 @@ export abstract class ITransactionRepository {
     description: string,
     type: 'income' | 'expense'
   ): Observable<any>;
+
+  abstract getBalance(): Observable<any>;
 }

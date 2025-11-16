@@ -323,7 +323,12 @@
         </button>
     </div>
 
-    <mat-paginator [length]="totalItems" [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" [pageIndex]="0"
-        [hidePageSize]="true" aria-label="Navegação de páginas do extrato" (page)="handlePageEvent($event)">
+    <mat-paginator 
+        [length]="(totalItems$ | async) || 0"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="handlePageEvent($event)"
+        aria-label="Selecione a página do extrato">
     </mat-paginator>
 </div>

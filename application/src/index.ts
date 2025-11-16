@@ -7,3 +7,4 @@ export * from './lib/use-cases/create-transaction.use-case';
 export * from './lib/use-cases/upload-attachment.use-case';
 export * from './lib/use-cases/download-attachment.use-case';
 export * from './lib/use-cases/get-category-suggestions.use-case';
+export * from './lib/use-cases/get-balance.use-case';
