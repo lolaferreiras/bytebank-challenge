@@ -1,5 +1,5 @@
 import { AuthService } from '@core/services/auth';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +16,8 @@ import { User } from '@core/models/user';
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
+    NgOptimizedImage,
     FormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -26,7 +27,8 @@ import { User } from '@core/models/user';
     MatFormFieldModule, 
     MatIconModule,
     MatInputModule, 
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    NgOptimizedImage
   ],
   templateUrl: './login.html',
   styleUrl: './login.scss'

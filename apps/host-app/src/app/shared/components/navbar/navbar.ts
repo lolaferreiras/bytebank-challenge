@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +16,7 @@ import { AuthService } from '@core/services/auth';
   standalone: true,
   imports: [
     CommonModule,
+    NgOptimizedImage,
     MatButtonModule,
     MatIconModule,
     MatToolbarModule,

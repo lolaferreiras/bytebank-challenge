@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +24,8 @@ import { Navbar } from '@shared/components/navbar/navbar';
     MatIconModule,
     MatInputModule, 
     ReactiveFormsModule,
-    Navbar
+    Navbar,
+    NgOptimizedImage
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss'

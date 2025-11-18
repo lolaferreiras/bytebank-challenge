@@ -1,9 +1,11 @@
 <mat-dialog-content role="dialog" aria-labelledby="login-title" aria-describedby="login-description">
   <div class="branding">
     <img class="illustration" 
-         [src]="signupMode() ? 'assets/images/signup.png': 'assets/images/signin.png'" 
+         [ngSrc]="signupMode() ? 'assets/images/signup.png' : 'assets/images/signin.png'"
+         width="320"
+         height="240"
          [alt]="signupMode() ? 'Ilustração de cadastro' : 'Ilustração de login'"
-         aria-hidden="true">
+         aria-hidden="true" />
   </div>
   <div class="login-container">
     <div class="signin-div">

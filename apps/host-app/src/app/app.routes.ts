@@ -1,6 +1,5 @@
 import { Route } from '@angular/router';
 import { authGuard } from '@core/guards/auth';
-import { Base } from '@pages/base/base';
 
 export const appRoutes: Route[] = [
   // Rota inicial
@@ -16,7 +15,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: '',
-    component: Base,
+    loadComponent: () => import('./pages/base/base').then(m => m.Base),
     canActivate: [authGuard],
     children: [
       {
@@ -30,6 +29,7 @@ export const appRoutes: Route[] = [
       // Microfrontends
       {
         path: 'resume-account-mf',
+        data: {preload: false},
         loadChildren: () =>
           import('resume-account-mf/Routes').then((m) => m.remoteRoutes),
       },
