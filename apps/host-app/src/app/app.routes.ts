@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { authGuard } from '@core/guards/auth';
+import { authGuard } from './core/guards/auth';
 
 export const appRoutes: Route[] = [
   // Rota inicial
@@ -8,23 +8,28 @@ export const appRoutes: Route[] = [
     redirectTo: 'home',
     pathMatch: 'full' 
   },
-  // Rotas públicas
+  // Rotas públicas - Auth Feature
   {
     path: 'home',
     loadComponent: () => import('./pages/home/home').then(m => m.Home)
   },
+  // Rotas protegidas
   {
     path: '',
     loadComponent: () => import('./pages/base/base').then(m => m.Base),
     canActivate: [authGuard],
     children: [
+      // Dashboard Feature Module (lazy loaded)
       {
         path: 'dashboard',
-        loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard)
+        loadChildren: () => 
+          import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES)
       },
+      // Transactions Feature Module (lazy loaded)
       {
         path: 'extract',
-        loadComponent: () => import('./pages/extract/extract').then(m => m.Extract)
+        loadChildren: () => 
+          import('./features/transactions/transactions.routes').then(m => m.TRANSACTIONS_ROUTES)
       },
       // Microfrontends
       {

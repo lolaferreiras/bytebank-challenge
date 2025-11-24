@@ -17,23 +17,20 @@ import {
   provideClientHydration,
   withEventReplay,
 } from '@angular/platform-browser';
-import { authInterceptor } from '@core/interceptors/auth.interceptor';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideStore } from '@ngrx/store';
 import { provideState } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 
-// Imports de 'balance' (existentes)
-import { balanceReducer } from './state/balance/reducer';
-import { BalanceEffects } from './state/balance/effects';
-
-// --- ADICIONE ESSES IMPORTS PARA 'TRANSACTIONS' ---
-import { transactionsFeature } from './state/transactions/transactions.reducer';
-import { TransactionEffects } from './state/transactions/transactions.effects';
 // ----------------------------------------------------
 
 import { ITransactionRepository } from '@bytebank-challenge/application';
 import { TransactionApiService } from '@bytebank-challenge/infrastructure';
+import { BalanceEffects } from './features/dashboard/state/effects';
+import { balanceReducer } from './features/dashboard/state/reducer';
+import { TransactionEffects } from './features/transactions/state/transactions/transactions.effects';
+import { transactionsFeature } from './features/transactions/state/transactions/transactions.reducer';
 
 export const appConfig: ApplicationConfig = {
   providers: [

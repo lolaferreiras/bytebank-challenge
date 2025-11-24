@@ -94,28 +94,125 @@ docker compose down
 
 ## 📁 Estrutura do Projeto
 
+O projeto segue **Clean Architecture** e **Feature Modules** para melhor organização e manutenibilidade:
+
 ```
 bytebank-challenge/
 ├── apps/
-│   ├── host-app/                    # Aplicação principal
+│   ├── host-app/                           # Aplicação principal
 │   │   ├── src/
-│   │   │   ├── app/                # Componentes e serviços
-│   │   │   ├── environments/       # Configurações de ambiente
+│   │   │   ├── app/
+│   │   │   │   ├── features/              # 🎯 Módulos por Feature
+│   │   │   │   │   ├── transactions/      # Feature de Transações
+│   │   │   │   │   │   ├── components/    # Componentes da feature
+│   │   │   │   │   │   │   ├── new-transaction/
+│   │   │   │   │   │   │   ├── edit-transaction-modal/
+│   │   │   │   │   │   │   ├── transaction-extract/
+│   │   │   │   │   │   │   └── confirm-delete-dialog/
+│   │   │   │   │   │   ├── pages/         # Páginas da feature
+│   │   │   │   │   │   │   └── extract/
+│   │   │   │   │   │   ├── state/         # NgRx State (Actions, Effects, Reducers)
+│   │   │   │   │   │   │   └── transactions/
+│   │   │   │   │   │   ├── transactions.facade.ts    # 🎭 Facade Pattern
+│   │   │   │   │   │   └── transactions.routes.ts    # Rotas lazy-loaded
+│   │   │   │   │   │
+│   │   │   │   │   ├── dashboard/         # Feature de Dashboard
+│   │   │   │   │   │   ├── components/    
+│   │   │   │   │   │   │   └── account-balance/
+│   │   │   │   │   │   ├── pages/
+│   │   │   │   │   │   │   └── dashboard/
+│   │   │   │   │   │   ├── state/
+│   │   │   │   │   │   │   └── balance/
+│   │   │   │   │   │   ├── dashboard.facade.ts       # 🎭 Facade Pattern
+│   │   │   │   │   │   └── dashboard.routes.ts
+│   │   │   │   │   │
+│   │   │   │   │   └── auth/              # Feature de Autenticação
+│   │   │   │   │       └── auth.routes.ts
+│   │   │   │   │
+│   │   │   │   ├── core/                  # Serviços core (singleton)
+│   │   │   │   │   ├── guards/
+│   │   │   │   │   ├── interceptors/
+│   │   │   │   │   └── services/
+│   │   │   │   │
+│   │   │   │   ├── shared/                # Componentes e serviços compartilhados
+│   │   │   │   │   ├── components/
+│   │   │   │   │   ├── directives/
+│   │   │   │   │   └── services/
+│   │   │   │   │
+│   │   │   │   ├── pages/                 # Páginas base (home, login, etc)
+│   │   │   │   ├── app.routes.ts          # Configuração de rotas
+│   │   │   │   └── app.config.ts          # Configuração da aplicação
+│   │   │   │
+│   │   │   ├── environments/              # Configurações de ambiente
 │   │   │   └── ...
 │   │   ├── module-federation.config.ts
 │   │   └── project.json
 │   │
-│   └── resume-account-mf/           # Microfrontend de análise de conta
+│   └── resume-account-mf/                  # Microfrontend de análise de conta
 │       ├── src/
 │       ├── module-federation.config.ts
 │       └── project.json
 │
-├── docker-compose.yml              # Orquestração Docker
-├── Dockerfile                      # Build da aplicação
-├── nginx.conf                      # Configuração Nginx
-├── package.json                    # Dependências
-└── nx.json                         # Configuração Nx
+├── application/                            # 🏛️ Camada de Aplicação (Use Cases)
+│   └── src/lib/
+│       ├── ports/                          # Interfaces de repositórios
+│       └── use-cases/                      # Casos de uso da aplicação
+│
+├── domain/                                 # 🏛️ Camada de Domínio (Entidades)
+│   └── src/lib/entities/
+│
+├── infrastructure/                         # 🏛️ Camada de Infraestrutura
+│   └── src/lib/services/                  # Implementações concretas
+│
+├── docker-compose.yml                      # Orquestração Docker
+├── Dockerfile                              # Build da aplicação
+├── nginx.conf                              # Configuração Nginx
+├── package.json                            # Dependências
+├── nx.json                                 # Configuração Nx
+└── FACADE_PATTERN.md                       # 📚 Documentação do Facade Pattern
 ```
+
+### 🎯 Padrões Arquiteturais Implementados
+
+#### 1. **Clean Architecture**
+- **Domain**: Entidades de negócio puras
+- **Application**: Casos de uso e portas (interfaces)
+- **Infrastructure**: Implementações concretas (services, repositories)
+
+#### 2. **Feature Modules**
+- Cada feature é auto-contida com seus próprios:
+  - Componentes
+  - Páginas
+  - State management (NgRx)
+  - Rotas (lazy loading)
+  - Facade
+
+#### 3. **Facade Pattern** 🎭
+- Simplifica a comunicação entre componentes e lógica de negócio
+- Encapsula NgRx Store, Actions, Selectors e Use Cases
+- Reduz complexidade nos componentes
+- Facilita testes com mock único
+
+**Exemplo de uso:**
+```typescript
+// Antes (sem Facade)
+export class Component {
+  private store = inject(Store);
+  private useCase1 = inject(UseCase1);
+  private useCase2 = inject(UseCase2);
+  // ... múltiplas injeções
+}
+
+// Depois (com Facade)
+export class Component {
+  facade = inject(TransactionsFacade);  // Uma única injeção!
+}
+```
+
+#### 4. **Lazy Loading**
+- Features carregadas sob demanda
+- Melhora performance inicial
+- Reduz bundle size
 
 ## 🔧 Scripts Disponíveis
 

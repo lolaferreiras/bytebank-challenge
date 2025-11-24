@@ -8,9 +8,11 @@
       <mat-option [value]="'Received'">Depósito</mat-option>
       <mat-option [value]="'Sent'">Transferência</mat-option>
     </mat-select>
-    <mat-error *ngIf="showTypeError" id="type-error">
+    @if (showTypeError) {
+    <mat-error id="type-error">
       Selecione o tipo de transação
     </mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="input-middle" [class.mat-form-field-invalid]="showAmountError">
@@ -18,9 +20,11 @@
     <input matInput id="amount-field" type="text" mask="separator.2" thousandSeparator="." decimalMarker=","
       prefix="R$ " [ngModel]="amount" (ngModelChange)="onAmountChange($event)" aria-label="Valor da transação em reais"
       aria-describedby="amount-error" [attr.aria-invalid]="showAmountError" />
-    <mat-error *ngIf="showAmountError" id="amount-error">
+    @if (showAmountError) {
+    <mat-error id="amount-error">
       Informe um valor válido maior que zero
     </mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="full-width" [class.mat-form-field-invalid]="showDescriptionError">
@@ -30,9 +34,11 @@
       (blur)="onDescriptionBlur()" aria-describedby="description-hint description-error"
       aria-label="Descrição da transação" [attr.aria-invalid]="showDescriptionError" />
     <mat-hint id="description-hint" align="end">{{ description.length || 0 }}/100</mat-hint>
-    <mat-error *ngIf="showDescriptionError" id="description-error">
+    @if (showDescriptionError) {
+    <mat-error id="description-error">
       Adicione uma descrição para a transação
     </mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="full-width">
@@ -40,9 +46,13 @@
     <input matInput id="category-field" type="text" [value]="category" readonly
       placeholder="Categoria será detectada automaticamente"
       aria-label="Categoria da transação (detectada automaticamente)" />
-    <mat-icon matSuffix *ngIf="isLoadingCategory" class="loading-icon" aria-hidden="true">hourglass_empty</mat-icon>
-    <mat-icon matSuffix *ngIf="!isLoadingCategory && category" class="category-icon"
+    @if (isLoadingCategory) {
+    <mat-icon matSuffix class="loading-icon" aria-hidden="true">hourglass_empty</mat-icon>
+    }
+    @if (!isLoadingCategory && category) {
+    <mat-icon matSuffix class="category-icon"
       aria-hidden="true">category</mat-icon>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="input-middle" [class.mat-form-field-invalid]="showDateError">
@@ -52,9 +62,11 @@
       [attr.aria-invalid]="showDateError" />
     <mat-datepicker-toggle matSuffix [for]="picker" aria-label="Abrir seletor de data"></mat-datepicker-toggle>
     <mat-datepicker #picker></mat-datepicker>
-    <mat-error *ngIf="showDateError" id="date-error">
+    @if (showDateError) {
+    <mat-error id="date-error">
       Selecione uma data válida (não pode ser futura)
     </mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="input-middle" (click)="fileInput.click()" style="cursor: pointer;"
@@ -64,9 +76,11 @@
       placeholder="Clique para anexar um arquivo" aria-label="Anexar comprovante da transação"
       aria-describedby="file-error">
     <mat-icon matSuffix aria-hidden="true">attach_file</mat-icon>
-    <mat-error *ngIf="showFileError" id="file-error">
+    @if (showFileError) {
+    <mat-error id="file-error">
       Arquivo inválido ou muito grande (máx: 10MB)
     </mat-error>
+    }
     <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept=".jpg,.jpeg,.png,.gif,.pdf,.txt"
       aria-label="Selecionar arquivo de comprovante" />
   </mat-form-field>
@@ -74,7 +88,9 @@
   <div class="form-actions">
     <button mat-flat-button color="primary" class="submit-btn input-middle" [disabled]="isSubmitting || !isFormValid()"
       (click)="submitTransaction()" aria-label="Enviar transação">
-      <mat-icon *ngIf="isSubmitting" class="loading-icon" aria-hidden="true">hourglass_empty</mat-icon>
+      @if (isSubmitting) {
+      <mat-icon class="loading-icon" aria-hidden="true">hourglass_empty</mat-icon>
+      }
       {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
     </button>
 

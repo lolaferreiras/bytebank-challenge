@@ -8,8 +8,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { Router, RouterModule } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { Login } from '@pages/login/login';
-import { AuthService } from '@core/services/auth';
+import { Login } from '../../../pages/login/login';
+import { AuthService } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-navbar',

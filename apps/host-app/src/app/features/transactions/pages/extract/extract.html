@@ -8,10 +8,12 @@
                     placeholder="Digite para pesquisar..." aria-label="Campo de pesquisa de transações"
                     aria-describedby="search-description" />
                 <mat-icon matSuffix aria-hidden="true">search</mat-icon>
-                <button matSuffix mat-icon-button *ngIf="searchTerm" (click)="clearSearch()"
+                @if (searchTerm) {
+                <button matSuffix mat-icon-button (click)="clearSearch()"
                     matTooltip="Limpar pesquisa" aria-label="Limpar pesquisa" type="button">
                     <mat-icon aria-hidden="true">clear</mat-icon>
                 </button>
+                }
             </mat-form-field>
             <div id="search-description" class="sr-only">
                 Pesquise por descrição, categoria, tipo, valor ou data das transações
@@ -24,7 +26,8 @@
             </button>
         </div>
 
-        <div class="filter-dialog-below" *ngIf="showFilter" id="filter-panel" role="dialog"
+        @if (showFilter) {
+        <div class="filter-dialog-below" id="filter-panel" role="dialog"
             aria-labelledby="filter-title" aria-describedby="filter-description">
             <div class="filter-section">
                 <h4 id="filter-title">Filtros de Transações</h4>
@@ -116,9 +119,11 @@
                     <mat-select [(ngModel)]="filters.category" (selectionChange)="applyFilter()"
                         aria-label="Filtrar por categoria">
                         <mat-option value="">Todas as categorias</mat-option>
-                        <mat-option *ngFor="let category of availableCategories" [value]="category">
+                        @for (category of availableCategories; track category) {
+                        <mat-option [value]="category">
                             {{ category }}
                         </mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
             </div>
@@ -153,12 +158,15 @@
                 </button>
             </div>
         </div>
+        }
     </div>
 
-    <div class="search-results" *ngIf="searchTerm && filteredTransactions.length > 0" role="region"
+    @if (searchTerm && filteredTransactions.length > 0) {
+    <div class="search-results" role="region"
         aria-labelledby="search-results-title">
         <h4 id="search-results-title">Resultados da pesquisa ({{ filteredTransactions.length }})</h4>
-        <div *ngFor="let t of filteredTransactions; trackBy: trackByTransaction" class="transaction" role="article"
+        @for (t of filteredTransactions; track t.id) {
+        <div class="transaction" role="article"
             [attr.aria-label]="'Transação ' + (t.type === 'income' ? 'de depósito' : 'de transferência') + ' de ' + (getPositiveAmount(t.amount) | number : '1.2-2') + ' reais'">
             <mat-icon fontSet="material-symbols-outlined" class="icon"
                 [ngClass]="{ income: t.type === 'income', expense: t.type === 'expense' }"
@@ -172,13 +180,17 @@
                     [attr.aria-label]="'Tipo: ' + (t.type === 'income' ? 'Depósito' : 'Transferência')">
                     {{ t.type === "income" ? "Depósito" : "Transferência" }}
                 </span>
-                <span class="transaction-description" *ngIf="t.description"
+                @if (t.description) {
+                <span class="transaction-description"
                     [attr.aria-label]="'Descrição: ' + t.description">
                     {{ t.description }}
                 </span>
-                <span class="transaction-category" *ngIf="t.category" [attr.aria-label]="'Categoria: ' + t.category">
+                }
+                @if (t.category) {
+                <span class="transaction-category" [attr.aria-label]="'Categoria: ' + t.category">
                     {{ t.category }}
                 </span>
+                }
                 <small class="transaction-date"
                     [attr.aria-label]="'Data: ' + (t.date | date : 'dd/MM/yyyy' : undefined : 'pt-BR')">
                     {{ t.date | date : "dd/MM/yyyy" : undefined : "pt-BR" }}
@@ -191,11 +203,13 @@
             </div>
 
             <div class="actions" role="group" aria-label="Ações da transação">
-                <button (click)="downloadAttachment(t)" *ngIf="t.anexo?.filename" aria-label="Baixar anexo da transação"
+                @if (t.anexo?.filename) {
+                <button (click)="downloadAttachment(t)" aria-label="Baixar anexo da transação"
                     type="button">
                     <mat-icon class="icon-settings" matTooltip="Download do anexo" fontSet="material-symbols-outlined"
                         aria-hidden="true">download</mat-icon>
                 </button>
+                }
 
                 <button (click)="openEditModal(t)" aria-label="Editar transação" type="button">
                     <mat-icon class="icon-settings" matTooltip="Editar" fontSet="material-symbols-outlined"
@@ -209,14 +223,19 @@
                 </button>
             </div>
         </div>
+        }
     </div>
+    }
 
-    <div *ngIf="!searchTerm && groupedTransactions.length > 0" role="region" aria-labelledby="extract-title">
-        <div *ngFor="let group of groupedTransactions; trackBy: trackByGroup" role="group"
+    @if (!searchTerm && groupedTransactions.length > 0) {
+    <div role="region" aria-labelledby="extract-title">
+        @for (group of groupedTransactions; track group.month) {
+        <div role="group"
             [attr.aria-label]="'Transações de ' + group.month">
             <h4 [attr.id]="'month-' + group.month">{{ group.month }}</h4>
 
-            <div *ngFor="let t of group.transactions; trackBy: trackByTransaction" class="transaction" role="article"
+            @for (t of group.transactions; track t.id) {
+            <div class="transaction" role="article"
                 [attr.aria-label]="'Transação ' + (t.type === 'income' ? 'de depósito' : 'de transferência') + ' de ' + (getPositiveAmount(t.amount) | number : '1.2-2') + ' reais'">
                 <mat-icon fontSet="material-symbols-outlined" class="icon"
                     [ngClass]="{ income: t.type === 'income', expense: t.type === 'expense' }"
@@ -230,14 +249,18 @@
                         [attr.aria-label]="'Tipo: ' + (t.type === 'income' ? 'Depósito' : 'Transferência')">
                         {{ t.type === "income" ? "Depósito" : "Transferência" }}
                     </span>
-                    <span class="transaction-description" *ngIf="t.description"
+                    @if (t.description) {
+                    <span class="transaction-description"
                         [attr.aria-label]="'Descrição: ' + t.description">
                         {{ t.description }}
                     </span>
-                    <span class="transaction-category" *ngIf="t.category"
+                    }
+                    @if (t.category) {
+                    <span class="transaction-category"
                         [attr.aria-label]="'Categoria: ' + t.category">
                         {{ t.category }}
                     </span>
+                    }
                     <small class="transaction-date"
                         [attr.aria-label]="'Data: ' + (t.date | date : 'dd/MM/yyyy' : undefined : 'pt-BR')">
                         {{ t.date | date : "dd/MM/yyyy" : undefined : "pt-BR" }}
@@ -250,11 +273,13 @@
                 </div>
 
                 <div class="actions" role="group" aria-label="Ações da transação">
-                    <button (click)="downloadAttachment(t)" *ngIf="t.anexo?.filename"
+                    @if (t.anexo?.filename) {
+                    <button (click)="downloadAttachment(t)"
                         aria-label="Baixar anexo da transação" type="button">
                         <mat-icon class="icon-settings" matTooltip="Download do anexo"
                             fontSet="material-symbols-outlined" aria-hidden="true">download</mat-icon>
                     </button>
+                    }
 
                     <button (click)="openEditModal(t)" aria-label="Editar transação" type="button">
                         <mat-icon class="icon-settings" matTooltip="Editar" fontSet="material-symbols-outlined"
@@ -268,10 +293,14 @@
                     </button>
                 </div>
             </div>
+            }
         </div>
+        }
     </div>
+    }
 
-    <div class="no-results" *ngIf="searchTerm && filteredTransactions.length === 0" role="alert" aria-live="polite">
+    @if (searchTerm && filteredTransactions.length === 0) {
+    <div class="no-results" role="alert" aria-live="polite">
         <mat-icon aria-hidden="true">search_off</mat-icon>
         <h3>Nenhuma transação encontrada</h3>
         <p>Não encontramos transações para "<strong>{{ searchTerm }}</strong>"</p>
@@ -288,9 +317,10 @@
             Limpar pesquisa
         </button>
     </div>
+    }
 
-    <div class="no-transactions" *ngIf="!searchTerm && groupedTransactions.length === 0 && allTransactions.length === 0"
-        role="alert" aria-live="polite">
+    @if (!searchTerm && groupedTransactions.length === 0 && allTransactions.length === 0) {
+    <div class="no-transactions" role="alert" aria-live="polite">
         <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
         <h3>Nenhuma transação encontrada</h3>
         <p>Você ainda não possui transações registradas.</p>
@@ -301,9 +331,10 @@
             Adicionar Transação
         </button>
     </div>
+    }
 
-    <div class="no-filtered-results"
-        *ngIf="!searchTerm && groupedTransactions.length === 0 && allTransactions.length > 0" role="alert"
+    @if (!searchTerm && groupedTransactions.length === 0 && allTransactions.length > 0) {
+    <div class="no-filtered-results" role="alert"
         aria-live="polite">
         <mat-icon aria-hidden="true">filter_list_off</mat-icon>
         <h3>Nenhuma transação corresponde aos filtros</h3>
@@ -322,13 +353,18 @@
             Limpar todos os filtros
         </button>
     </div>
+    }
 
-    <mat-paginator 
-        [length]="(totalItems$ | async) || 0"
-        [pageSize]="pageSize"
-        [pageIndex]="pageIndex"
-        [pageSizeOptions]="pageSizeOptions"
-        (page)="handlePageEvent($event)"
-        aria-label="Selecione a página do extrato">
-    </mat-paginator>
+    @defer (on viewport) {
+      <mat-paginator 
+          [length]="(totalItems$ | async) || 0"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="handlePageEvent($event)"
+          aria-label="Selecione a página do extrato">
+      </mat-paginator>
+    } @placeholder {
+      <div class="skeleton-paginator">Carregando paginação...</div>
+    }
 </div>

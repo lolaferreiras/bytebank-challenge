@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,9 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 
 import { MatCardModule } from '@angular/material/card';
 import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
-import { UserService } from '@core/services/user';
+import { UserService } from '../../../../core/services/user';
 import { Transaction } from '@bytebank-challenge/domain';
-import { NotificationService } from '@shared/services/notification';
+import { NotificationService } from '../../../../shared/services/notification';
 
 import { LOCALE_ID } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
@@ -26,14 +26,7 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-
-import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
-import {
-  TransactionsActions,
-  TransactionsApiActions,
-} from '../../state/transactions/transactions.actions';
-import { GetCategorySuggestionsUseCase } from '@bytebank-challenge/application';
+import { TransactionsFacade } from '../../transactions.facade';
 
 registerLocaleData(localePt);
 
@@ -67,10 +60,7 @@ export class NewTransaction implements OnDestroy {
   accountID = (inject(UserService) as UserService).loggedInUser?.id ?? 0;
 
   notificationService = inject(NotificationService);
-
-  private store = inject(Store);
-  private actions$ = inject(Actions);
-  private getCategorySuggestionsUseCase = inject(GetCategorySuggestionsUseCase);
+  facade = inject(TransactionsFacade);
 
   transactionType: 'Received' | 'Sent' | null = null;
   amount: number | null = null;
@@ -101,17 +91,14 @@ export class NewTransaction implements OnDestroy {
             this.isLoadingCategory = true;
             const type =
               this.transactionType === 'Received' ? 'income' : 'expense';
-            return this.getCategorySuggestionsUseCase.execute(
-              description.trim(),
-              type
-            );
+            return this.facade.getCategorySuggestions(description.trim(), type);
           }
           return [];
         }),
         takeUntil(this.destroy$)
       )
       .subscribe({
-        next: (response) => {
+        next: (response: any) => {
           this.isLoadingCategory = false;
           if (response?.result?.detectedCategory) {
             this.category = response.result.detectedCategory;
@@ -123,29 +110,17 @@ export class NewTransaction implements OnDestroy {
         },
       });
 
-    this.actions$
-      .pipe(
-        ofType(TransactionsApiActions.createTransactionSuccess),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
+    // Observar status da criação através do facade
+    this.facade.status$.pipe(takeUntil(this.destroy$)).subscribe((status) => {
+      if (status === 'success' && this.isSubmitting) {
         this.isSubmitting = false;
-        this.notificationService.showSuccessToast(
-          'Transação criada com sucesso!'
-        );
+        this.notificationService.showSuccessToast('Transação criada com sucesso!');
         this.resetForm();
-      });
-
-    this.actions$
-      .pipe(
-        ofType(TransactionsApiActions.createTransactionFailure),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(({ error }) => {
+      } else if (status === 'error' && this.isSubmitting) {
         this.isSubmitting = false;
-        console.error('Erro ao criar transação:', error);
-        this.notificationService.showTransactionError(error);
-      });
+        this.notificationService.showTransactionError('Erro ao criar transação');
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -262,13 +237,7 @@ export class NewTransaction implements OnDestroy {
         account: 'Bank Account',
       };
 
-      this.store.dispatch(
-        TransactionsActions.createTransaction({
-          transaction: transaction,
-          file: this.selectedFile,
-        })
-      );
-
+      this.facade.createTransaction(transaction, this.selectedFile);
     }
   }
 

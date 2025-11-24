@@ -1,4 +1,4 @@
-import { User } from "@core/models/user";
+import { User } from '../models/user';
 import { Observable } from "rxjs";
 
 export interface IAuthService {

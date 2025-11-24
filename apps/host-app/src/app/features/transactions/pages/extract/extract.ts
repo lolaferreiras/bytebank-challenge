@@ -11,8 +11,8 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { groupBy } from 'lodash';
 import { MatDialog } from '@angular/material/dialog';
-import { EditTransactionModal } from '@components/edit-transaction-modal/edit-transaction-modal';
-import { ConfirmDeleteDialog } from '@components/confirm-delete-dialog/confirm-delete-dialog';
+import { EditTransactionModal } from '../../components/edit-transaction-modal/edit-transaction-modal';
+import { ConfirmDeleteDialog } from '../../components/confirm-delete-dialog/confirm-delete-dialog';
 import { Transaction } from '@bytebank-challenge/domain';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
@@ -30,20 +30,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
-
-import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
-import {
-  selectStatus,
-  selectTotalItems,
-  selectTransactions,
-} from '../../state/transactions/transactions.reducer';
-import {
-  TransactionsActions,
-  TransactionsApiActions,
-} from '../../state/transactions/transactions.actions';
-
-import { DownloadAttachmentUseCase } from '@bytebank-challenge/application';
+import { TransactionsFacade } from '../../transactions.facade';
 
 @Injectable()
 export class MatPaginatorIntlPtBr extends MatPaginatorIntl {
@@ -135,43 +122,17 @@ export class Extract implements OnInit, OnDestroy {
 
   dialog = inject(MatDialog);
   elementRef = inject(ElementRef);
-  private store = inject(Store);
-  private actions$ = inject(Actions);
-  private downloadAttachmentUseCase = inject(DownloadAttachmentUseCase);
+  facade = inject(TransactionsFacade);
 
-  private transactions$ = this.store.select(selectTransactions);
-  totalItems$ = this.store.select(selectTotalItems);
-  status$ = this.store.select(selectStatus);
+  private transactions$ = this.facade.transactions$;
+  totalItems$ = this.facade.totalItems$;
+  status$ = this.facade.status$;
 
   constructor() {
     this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((searchTerm) => {
         this.performSearch(searchTerm);
-      });
-
-    this.actions$
-      .pipe(
-        ofType(
-          TransactionsApiActions.updateTransactionSuccess,
-          TransactionsApiActions.deleteTransactionSuccess
-        ),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        console.log('Ação de CUD concluída com sucesso');
-      });
-
-    this.actions$
-      .pipe(
-        ofType(
-          TransactionsApiActions.updateTransactionFailure,
-          TransactionsApiActions.deleteTransactionFailure
-        ),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(({ error }) => {
-        console.error('Falha na operação de CUD', error);
       });
   }
 
@@ -208,13 +169,11 @@ export class Extract implements OnInit, OnDestroy {
   }
 
   private loadStatement(): void {
-    this.store.dispatch(
-      TransactionsActions.loadTransactions({
-        page: this.pageIndex + 1,
-        limit: this.pageSize,
-        sort: this.sort,
-        order: this.order,
-      })
+    this.facade.loadTransactions(
+      this.pageIndex + 1,
+      this.pageSize,
+      this.sort,
+      this.order
     );
   }
 
@@ -378,17 +337,9 @@ export class Extract implements OnInit, OnDestroy {
     const filename = transaction.anexo.filename;
     const originalName = transaction.anexo.originalName || filename;
 
-    this.downloadAttachmentUseCase.execute(filename).subscribe({
+    this.facade.downloadAttachment(filename).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        document.body.appendChild(a);
-        a.style.display = 'none';
-        a.href = url;
-        a.download = originalName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        this.facade.downloadFile(blob, originalName);
       },
       error: (err) => {
         console.error('Erro ao baixar o anexo:', err);
@@ -409,13 +360,7 @@ export class Extract implements OnInit, OnDestroy {
         const newFile: File | null = result.file;
         const transactionId = updatedTransactionData.id!;
 
-        this.store.dispatch(
-          TransactionsActions.updateTransaction({
-            transactionId: transactionId,
-            transaction: updatedTransactionData,
-            file: newFile,
-          })
-        );
+        this.facade.updateTransaction(transactionId, updatedTransactionData, newFile);
       }
     });
   }
@@ -429,9 +374,7 @@ export class Extract implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result === true) {
-        this.store.dispatch(
-          TransactionsActions.deleteTransaction({ transactionId: id })
-        );
+        this.facade.deleteTransaction(id);
       }
     });
   }

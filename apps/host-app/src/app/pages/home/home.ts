@@ -7,9 +7,9 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Login } from '@pages/login/login';
-import { Footer } from '@shared/components/footer/footer';
-import { Navbar } from '@shared/components/navbar/navbar';
+import { Login } from '../login/login';
+import { Footer } from '../../shared/components/footer/footer';
+import { Navbar } from '../../shared/components/navbar/navbar';
 
 @Component({
   selector: 'app-home',

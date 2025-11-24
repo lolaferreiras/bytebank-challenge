@@ -27,7 +27,7 @@
             formControlName="username"
             required
             aria-describedby="username-error"
-            aria-invalid="form.controls.username.invalid"
+            [attr.aria-invalid]="form.controls.username.invalid ? 'true' : 'false'"
           />
           @if (form.controls.username.invalid && (form.controls.username.dirty || form.controls.username.touched)) {
             <mat-error id="username-error">Nome é obrigatório</mat-error>
@@ -45,7 +45,7 @@
           required
           type="email"
           aria-describedby="email-error"
-          aria-invalid="form.controls.email.invalid"
+          [attr.aria-invalid]="form.controls.email.invalid ? 'true' : 'false'"
         />
         @if (form.controls.email.getError('required') && (form.controls.email.dirty || form.controls.email.touched)) {
           <mat-error id="email-error">Email é obrigatório</mat-error>
@@ -63,7 +63,7 @@
           [attr.type]="showPassword() ? 'text' : 'password'" 
           formControlName="password"
           aria-describedby="password-error"
-          aria-invalid="form.controls.password.invalid"
+          [attr.aria-invalid]="form.controls.password.invalid ? 'true' : 'false'"
         />
         <button
           mat-icon-button
@@ -71,7 +71,7 @@
           type="button"
           (click)="togglePassword()"
           [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-          aria-pressed="showPassword()"
+          [attr.aria-pressed]="showPassword() ? 'true' : 'false'"
         >
           <mat-icon aria-hidden="true">{{showPassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
         </button>

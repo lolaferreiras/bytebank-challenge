@@ -23,6 +23,17 @@
         "apps/resume-account-mf/src/app/remote-entry/entry.routes"
       ],
 
+      // Feature Modules Aliases
+      "@transactions/*": [
+        "apps/host-app/src/app/features/transactions/*"
+      ],
+      "@dashboard/*": [
+        "apps/host-app/src/app/features/dashboard/*"
+      ],
+      "@auth/*": [
+        "apps/host-app/src/app/features/auth/*"
+      ],
+
       // Atalhos do Host-App (Movidos e Corrigidos)
       "@core/*": [
         "apps/host-app/src/app/core/*"

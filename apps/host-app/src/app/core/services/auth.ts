@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { IAuthService } from '@core/interfaces/auth.interface';
-import { User } from '@core/models/user';
+import { IAuthService } from '../interfaces/auth.interface';
+import { User } from '../models/user';
 import { Observable, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { CryptoService } from './crypto.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,12 +13,23 @@ import { environment } from '../../../environments/environment';
 export class AuthService implements IAuthService {
   private router = inject(Router);
   private http = inject(HttpClient);
+  private cryptoService = inject(CryptoService);
   private apiUrl = environment.apiUrl;
   private tokenKey = 'authToken';
   private userIdKey = 'userId';
 
   public login(credentials: Pick<User, 'email' | 'password'>): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/user/auth`, credentials).pipe(
+    // Validação para garantir que a senha existe
+    if (!credentials.password) {
+      throw new Error('Senha é obrigatória');
+    }
+    
+    const hashedCredentials = {
+      ...credentials,
+      password: this.cryptoService.hashPassword(credentials.password)
+    };
+    
+    return this.http.post<any>(`${this.apiUrl}/user/auth`, hashedCredentials).pipe(
       tap(response => {
         if (response && response.result) {
           if (response.result.token) {
@@ -48,7 +60,13 @@ export class AuthService implements IAuthService {
   }
 
   signUp(userData: Partial<User>): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/user`, userData);
+    // Hash da senha antes de enviar
+    const hashedUserData = {
+      ...userData,
+      password: userData.password ? this.cryptoService.hashPassword(userData.password) : undefined
+    };
+    
+    return this.http.post<any>(`${this.apiUrl}/user`, hashedUserData);
   }
 
   getTokenPayload(): User & { exp: number } | null {

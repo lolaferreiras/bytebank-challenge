@@ -1,4 +1,4 @@
-import { AuthService } from '@core/services/auth';
+import { AuthService } from '../../core/services/auth';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -8,9 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { NotificationService } from '@shared/services/notification';
+import { NotificationService } from '../../shared/services/notification';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { User } from '@core/models/user';
+import { User } from '../../core/models/user';
 
 @Component({
   selector: 'app-login',

@@ -17,13 +17,14 @@
   <!-- Cabeçalho da sidebar -->
   <div class="sidebar-header">
     <!-- Botão de fechar (apenas mobile) -->
-    <button mat-icon-button 
-            class="close-sidebar-btn" 
-            (click)="closeSidebar()" 
-            *ngIf="isMobile"
-            aria-label="Fechar menu lateral">
-      <mat-icon aria-hidden="true">close</mat-icon>
-    </button>
+    @if (isMobile) {
+      <button mat-icon-button 
+              class="close-sidebar-btn" 
+              (click)="closeSidebar()" 
+              aria-label="Fechar menu lateral">
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
+    }
   </div>
 
   <mat-nav-list class="sidebar-list" role="list">

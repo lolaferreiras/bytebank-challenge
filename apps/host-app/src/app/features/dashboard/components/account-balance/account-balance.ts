@@ -1,10 +1,8 @@
-import { Component, inject, OnInit, computed, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { Store } from '@ngrx/store';
-import { loadBalance } from '../../state/balance/actions';
-import { selectBalance, selectBalanceLoading } from '../../state/balance/selectors'; // ajuste o caminho se necessário
+import { DashboardFacade } from '../../dashboard.facade';
 
 @Component({
   selector: 'app-account-balance',
@@ -15,14 +13,14 @@ import { selectBalance, selectBalanceLoading } from '../../state/balance/selecto
   providers: [CurrencyPipe, DatePipe],
 })
 export class AccountBalance implements OnInit {
-  private store = inject(Store);
+  facade = inject(DashboardFacade);
 
-  balance$ = this.store.select(selectBalance);
-  loading$ = this.store.select(selectBalanceLoading);
+  balance$ = this.facade.balance$;
+  loading$ = this.facade.balanceLoading$;
   showBalance = true;
 
   ngOnInit(): void {
-    this.store.dispatch(loadBalance());
+    this.facade.loadBalance();
   }
 
   toggleBalanceVisibility(): void {

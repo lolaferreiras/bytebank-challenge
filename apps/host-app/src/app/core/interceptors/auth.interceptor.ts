@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '@core/services/auth';
-import { NotificationService } from '@shared/services/notification';
+import { AuthService } from '../services/auth';
+import { NotificationService } from '../../shared/services/notification';
 import { EMPTY } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {

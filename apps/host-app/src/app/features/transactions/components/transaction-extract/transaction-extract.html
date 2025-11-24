@@ -7,7 +7,8 @@
       <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">filter_alt</mat-icon>
     </button>
 
-    <div id="filter-dialog" class="filter-dialog-below" *ngIf="showFilter" role="dialog" aria-labelledby="filter-title"
+    @if (showFilter) {
+    <div id="filter-dialog" class="filter-dialog-below" role="dialog" aria-labelledby="filter-title"
       aria-describedby="filter-description">
       <h4 id="filter-title" class="sr-only">Filtros de transações</h4>
       <p id="filter-description" class="sr-only">Configure os filtros para ordenar as transações</p>
@@ -34,32 +35,35 @@
         <button mat-raised-button color="primary" (click)="applyFilter()" aria-label="Aplicar filtros">Aplicar</button>
       </div>
     </div>
+    }
   </div>
 
-  <div class="center-container" *ngIf="(status$ | async) === 'loading'">
+  @if ((status$ | async) === 'loading') {
+  <div class="center-container">
     <p>Carregando transações...</p>
-    </div>
+  </div>
+  }
 
-  <div class="center-container" *ngIf="(status$ | async) === 'error'">
+  @if ((status$ | async) === 'error') {
+  <div class="center-container">
     <p class="error-message">
       Ops! Ocorreu um erro ao buscar seu extrato.
     </p>
   </div>
+  }
 
-  <ng-container *ngIf="(status$ | async) === 'success'">
-    
-    <div
-      class="center-container"
-      *ngIf="groupedTransactions.length === 0; else transactionsList"
-    >
+  @if ((status$ | async) === 'success') {
+    @if (groupedTransactions.length === 0) {
+    <div class="center-container">
       <p>Nenhuma transação encontrada.</p>
     </div>
-
-    <ng-template #transactionsList>
-      <div *ngFor="let group of groupedTransactions">
+    } @else {
+      @for (group of groupedTransactions; track group.month) {
+      <div>
         <h4>{{ group.month }}</h4>
 
-        <div *ngFor="let t of group.transactions" class="transaction" role="listitem"
+        @for (t of group.transactions; track t.id) {
+        <div class="transaction" role="listitem"
           [attr.aria-label]="'Transação de ' + (t.type === 'income' ? 'depósito' : 'transferência') + ' no valor de R$ ' + getPositiveAmount(t.amount)">
           
           <mat-icon fontSet="material-symbols-outlined" class="icon" [ngClass]="{ 
@@ -72,8 +76,12 @@
 
           <div class="info">
             <span class="transaction-type">{{ t.type === "income" ? "Depósito" : "Transferência" }}</span>
-            <span class="transaction-description" *ngIf="t.description">{{ t.description }}</span>
-            <span class="transaction-category" *ngIf="t.category">{{ t.category }}</span>
+            @if (t.description) {
+            <span class="transaction-description">{{ t.description }}</span>
+            }
+            @if (t.category) {
+            <span class="transaction-category">{{ t.category }}</span>
+            }
             <small class="transaction-date">{{ t.date | date : "dd/MM/yyyy" : undefined : "pt-BR" }}</small>
           </div>
 
@@ -85,10 +93,12 @@
           </div>
 
           <div class="actions" role="group" aria-label="Ações da transação">
-            <button (click)="downloadAttachment(t)" *ngIf="t.anexo?.filename" aria-label="Baixar anexo da transação">
+            @if (t.anexo?.filename) {
+            <button (click)="downloadAttachment(t)" aria-label="Baixar anexo da transação">
               <mat-icon class="icon-settings" matTooltip="Download do anexo" fontSet="material-symbols-outlined"
                 aria-hidden="true">download</mat-icon>
             </button>
+            }
 
             <button (click)="openEditModal(t)" aria-label="Editar transação">
               <mat-icon class="icon-settings" matTooltip="Editar" fontSet="material-symbols-outlined"
@@ -101,9 +111,11 @@
             </button>
           </div>
         </div>
+        }
       </div>
-    </ng-template>
-  </ng-container>
+      }
+    }
+  }
 
   <mat-paginator 
     [length]="(totalItems$ | async) || 0" 

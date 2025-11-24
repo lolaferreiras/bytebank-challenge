@@ -2,10 +2,10 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { AccountBalance } from '@components/account-balance/account-balance';
-import { TransactionExtract } from '@components/transaction-extract/transaction-extract';
-import { NewTransaction } from '@components/new-transaction/new-transaction';
-import { UserService } from '@core/services/user';
+import { AccountBalance } from '../../components/account-balance/account-balance';
+import { TransactionExtract } from '../../../transactions/components/transaction-extract/transaction-extract';
+import { NewTransaction } from '../../../transactions/components/new-transaction/new-transaction';
+import { UserService } from '../../../../core/services/user';
 
 @Component({
   selector: 'app-dashboard',

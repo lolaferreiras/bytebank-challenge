@@ -12,12 +12,12 @@
   </div>
 
   <div class="value">
-    <ng-container *ngIf="balance$ | async as balance">
+    @if (balance$ | async; as balance) {
       {{
         showBalance
           ? ('R$ ' + (balance | number: '1.2-2'))
           : '••••••'
       }}
-    </ng-container>
+    }
   </div>
 </mat-card>

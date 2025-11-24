@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import * as BalanceActions from './actions';
-import { BalanceResponse } from '../../../../../../domain/src';
+import { BalanceResponse } from '@bytebank-challenge/domain';
 
 import { GetBalanceUseCase } from '@bytebank-challenge/application';
 

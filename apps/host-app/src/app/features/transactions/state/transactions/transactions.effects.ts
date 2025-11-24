@@ -15,7 +15,7 @@ import {
   UploadAttachmentUseCase,
 } from '@bytebank-challenge/application';
 
-import { loadBalance } from '../balance/actions';
+import { loadBalance } from '../../../dashboard/state/actions';
 
 @Injectable()
 export class TransactionEffects {
@@ -48,6 +48,7 @@ export class TransactionEffects {
       ofType(TransactionsActions.createTransaction),
       concatMap(({ transaction, file }) =>
         this.createTransactionUseCase.execute(transaction).pipe(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           concatMap((response: any) => {
             const createdTransactionId = response.result.id;
             if (file && createdTransactionId) {

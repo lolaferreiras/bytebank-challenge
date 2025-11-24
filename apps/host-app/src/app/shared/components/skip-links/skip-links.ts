@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ACCESSIBILITY_CONFIG, SkipLink } from '../../utils/accessibility.config';
 import { AccessibilityService } from '../../services/accessibility.service';
@@ -12,8 +12,7 @@ import { AccessibilityService } from '../../services/accessibility.service';
 })
 export class SkipLinksComponent implements OnInit {
   skipLinks: SkipLink[] = [];
-
-  constructor(private accessibilityService: AccessibilityService) {}
+  private accessibilityService = inject(AccessibilityService);
 
   ngOnInit() {
     this.skipLinks = ACCESSIBILITY_CONFIG.skipLinks;
