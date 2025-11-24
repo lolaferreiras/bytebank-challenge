@@ -62,7 +62,7 @@
           id="password-field"
           [attr.type]="showPassword() ? 'text' : 'password'" 
           formControlName="password"
-          aria-describedby="password-error"
+          aria-describedby="password-error password-requirements"
           [attr.aria-invalid]="form.controls.password.invalid ? 'true' : 'false'"
         />
         <button
@@ -75,10 +75,94 @@
         >
           <mat-icon aria-hidden="true">{{showPassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
         </button>
+        
+        @if (signupMode() && form.controls.password.value) {
+          <mat-hint id="password-strength">
+            Força: <strong [style.color]="getPasswordStrengthLabel().color === 'warn' ? '#f44336' : getPasswordStrengthLabel().color === 'accent' ? '#ff9800' : '#4caf50'">
+              {{getPasswordStrengthLabel().label}}
+            </strong>
+          </mat-hint>
+        }
+        
         @if (form.controls.password.invalid && (form.controls.password.dirty || form.controls.password.touched)) {
-          <mat-error id="password-error">Insira uma senha válida</mat-error>
+          <div id="password-error">
+            @if (form.controls.password.getError('required')) {
+              <mat-error>Senha é obrigatória</mat-error>
+            }
+            @if (signupMode()) {
+              @if (form.controls.password.getError('minLength')) {
+                <mat-error>Mínimo 8 caracteres</mat-error>
+              }
+              @if (form.controls.password.getError('uppercase')) {
+                <mat-error>Deve conter ao menos uma letra maiúscula</mat-error>
+              }
+              @if (form.controls.password.getError('lowercase')) {
+                <mat-error>Deve conter ao menos uma letra minúscula</mat-error>
+              }
+              @if (form.controls.password.getError('number')) {
+                <mat-error>Deve conter ao menos um número</mat-error>
+              }
+              @if (form.controls.password.getError('special')) {
+                <mat-error>Deve conter ao menos um caractere especial (!&#64;#$%^&*)</mat-error>
+              }
+              @if (form.controls.password.getError('noSpaces')) {
+                <mat-error>Não pode conter espaços</mat-error>
+              }
+              @if (form.controls.password.getError('common')) {
+                <mat-error>Senha muito comum, escolha outra</mat-error>
+              }
+              @if (form.controls.password.getError('sequence')) {
+                <mat-error>Não use sequências óbvias (123, abc, etc)</mat-error>
+              }
+            }
+          </div>
         }
       </mat-form-field>
+
+      @if (signupMode()) {
+        <mat-form-field>
+          <mat-label for="confirm-password-field">Confirmar Senha</mat-label>
+          <input 
+            matInput 
+            id="confirm-password-field"
+            [attr.type]="showConfirmPassword() ? 'text' : 'password'" 
+            formControlName="confirmPassword"
+            aria-describedby="confirm-password-error"
+            [attr.aria-invalid]="form.controls.confirmPassword.invalid ? 'true' : 'false'"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="toggleConfirmPassword()"
+            [attr.aria-label]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+            [attr.aria-pressed]="showConfirmPassword() ? 'true' : 'false'"
+          >
+            <mat-icon aria-hidden="true">{{showConfirmPassword() ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          @if (form.controls.confirmPassword.invalid && (form.controls.confirmPassword.dirty || form.controls.confirmPassword.touched)) {
+            <mat-error id="confirm-password-error">
+              @if (form.controls.confirmPassword.getError('required')) {
+                Confirmação de senha é obrigatória
+              }
+              @if (form.controls.confirmPassword.getError('passwordMismatch')) {
+                As senhas não coincidem
+              }
+            </mat-error>
+          }
+        </mat-form-field>
+
+        <div class="password-requirements" id="password-requirements">
+          <small><strong>Requisitos da senha:</strong></small>
+          <ul>
+            <li>Mínimo 8 caracteres</li>
+            <li>Uma letra maiúscula (A-Z)</li>
+            <li>Uma letra minúscula (a-z)</li>
+            <li>Um número (0-9)</li>
+            <li>Um caractere especial (!&#64;#$%^&*)</li>
+          </ul>
+        </div>
+      }
       <!-- <mat-checkbox class="checkbox" formControlName="agree">
         <small>
           Li e estou ciente quanto às condições de tratamento dos meus 

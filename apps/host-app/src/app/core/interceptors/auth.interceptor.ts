@@ -15,7 +15,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return EMPTY
   }
 
-  const token = localStorage.getItem('authToken');
+  const token = sessionStorage.getItem('authToken');
   const isFileUpload = req.body instanceof FormData;
 
   if (token) {

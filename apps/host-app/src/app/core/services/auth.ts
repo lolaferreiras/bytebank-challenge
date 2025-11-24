@@ -33,10 +33,10 @@ export class AuthService implements IAuthService {
       tap(response => {
         if (response && response.result) {
           if (response.result.token) {
-            localStorage.setItem(this.tokenKey, response.result.token);
+            sessionStorage.setItem(this.tokenKey, response.result.token);
           }
           if (response.result.id) {
-            localStorage.setItem(this.userIdKey, response.result.id);
+            sessionStorage.setItem(this.userIdKey, response.result.id);
           }
         }
       })
@@ -56,7 +56,7 @@ export class AuthService implements IAuthService {
     */
 
   public getUserId(): string | null {
-    return localStorage.getItem(this.userIdKey);
+    return sessionStorage.getItem(this.userIdKey);
   }
 
   signUp(userData: Partial<User>): Observable<any> {
@@ -70,7 +70,7 @@ export class AuthService implements IAuthService {
   }
 
   getTokenPayload(): User & { exp: number } | null {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) return null;
 
     try {
@@ -83,17 +83,19 @@ export class AuthService implements IAuthService {
   }
 
   getUser() {
-    const user = localStorage.getItem('user');
+    const user = sessionStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.userIdKey);
+    sessionStorage.clear();
     this.router.navigate(['']);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return sessionStorage.getItem(this.tokenKey);
   }
 
   isAuthenticated(): boolean {
@@ -107,6 +109,6 @@ export class AuthService implements IAuthService {
       username: user.username,
       exp: Date.now() + 10 * 60 * 1000 // 10 minutos
     };
-    localStorage.setItem('token', btoa(JSON.stringify(payload)));
+    sessionStorage.setItem('token', btoa(JSON.stringify(payload)));
   }
 }

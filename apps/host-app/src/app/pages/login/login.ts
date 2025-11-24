@@ -11,6 +11,7 @@ import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogModule, M
 import { NotificationService } from '../../shared/services/notification';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { User } from '../../core/models/user';
+import { PasswordValidator } from '../../core/validators/password.validator';
 
 @Component({
   selector: 'app-login',
@@ -41,6 +42,8 @@ export class Login {
   signupData = inject<boolean>(MAT_DIALOG_DATA);
 
   showPassword = signal(false);
+  showConfirmPassword = signal(false);
+  passwordStrength = signal(0);
   signupMode = computed(() => !!this.signupData);
 
   form = new FormGroup({
@@ -49,8 +52,24 @@ export class Login {
       Validators.required, 
       Validators.pattern(/^(?!\s)(?!.*^\s+$).+/)
     ] : Validators.pattern(/^(?!\s)(?!.*^\s+$).+/)),
-    password: new FormControl('', Validators.required)
+    password: new FormControl('', this.signupMode() 
+      ? [Validators.required, PasswordValidator.strong()]
+      : [Validators.required]
+    ),
+    confirmPassword: new FormControl('', this.signupMode()
+      ? [Validators.required, PasswordValidator.match('password')]
+      : []
+    )
   });
+
+  constructor() {
+    // Monitorar mudanças na senha para calcular força
+    this.form.get('password')?.valueChanges.subscribe(password => {
+      if (password && this.signupMode()) {
+        this.passwordStrength.set(PasswordValidator.calculateStrength(password));
+      }
+    });
+  }
 
   onSubmit() {
     if(this.form.invalid) {
@@ -102,6 +121,14 @@ export class Login {
 
   togglePassword(): void {
     this.showPassword.update(v => !v);
+  }
+
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword.update(v => !v);
+  }
+
+  getPasswordStrengthLabel() {
+    return PasswordValidator.getStrengthLabel(this.passwordStrength());
   }
 
   onCancelClick(): void {

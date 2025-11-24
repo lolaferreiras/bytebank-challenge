@@ -214,6 +214,96 @@ export class Component {
 - Melhora performance inicial
 - Reduz bundle size
 
+### 🔐 Segurança - Criptografia de Senhas
+
+O projeto implementa criptografia de senhas no lado do cliente antes do envio para o backend:
+
+#### **CryptoService**
+Serviço responsável pela criptografia usando **SHA-256** e **PBKDF2**:
+
+```typescript
+// apps/host-app/src/app/core/services/crypto.service.ts
+export class CryptoService {
+  hashPassword(password: string): string {
+    return SHA256(password).toString();
+  }
+  
+  hashPasswordSecure(password: string, salt?: string): string {
+    const finalSalt = salt || 'bytebank-default-salt';
+    return PBKDF2(password, finalSalt, {
+      keySize: 256/32,
+      iterations: 1000
+    }).toString();
+  }
+}
+```
+
+#### **Integração com Autenticação**
+O `AuthService` utiliza o `CryptoService` para hash das senhas antes de enviar:
+
+```typescript
+login(email: string, password: string): Observable<AuthResponse> {
+  const hashedPassword = this.cryptoService.hashPassword(password);
+  return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, {
+    email,
+    password: hashedPassword  // ✅ Senha criptografada
+  });
+}
+
+signUp(user: User): Observable<AuthResponse> {
+  const userWithHashedPassword = {
+    ...user,
+    password: this.cryptoService.hashPassword(user.password)
+  };
+  return this.http.post<AuthResponse>(`${this.apiUrl}/auth/signup`, userWithHashedPassword);
+}
+```
+
+#### **Benefícios de Segurança**
+- ✅ Senha **nunca** trafega em texto plano pela rede
+- ✅ Proteção contra **inspeção de rede** (DevTools, Proxies)
+- ✅ Hash **irreversível** (SHA-256)
+- ✅ Algoritmo **PBKDF2** disponível para maior segurança com salt
+
+#### **Password Policies (Políticas de Senha Forte)**
+O sistema implementa validações rigorosas para senhas:
+
+**Requisitos obrigatórios:**
+- ✅ Mínimo 8 caracteres
+- ✅ Pelo menos uma letra maiúscula (A-Z)
+- ✅ Pelo menos uma letra minúscula (a-z)
+- ✅ Pelo menos um número (0-9)
+- ✅ Pelo menos um caractere especial (!@#$%^&*)
+- ✅ Sem espaços em branco
+- ✅ Bloqueio de senhas comuns (password123, 12345678, etc)
+- ✅ Bloqueio de sequências óbvias (abc, 123, qwe, etc)
+
+**Recursos:**
+- 📊 **Indicador de força** em tempo real (Fraca/Média/Forte)
+- 🔄 **Confirmação de senha** para evitar erros de digitação
+- 💬 **Mensagens de erro específicas** para cada requisito
+- ♿ **Acessibilidade completa** com ARIA attributes
+
+**Validador customizado:**
+```typescript
+// apps/host-app/src/app/core/validators/password.validator.ts
+export class PasswordValidator {
+  static strong(): ValidatorFn { ... }
+  static match(passwordFieldName: string): ValidatorFn { ... }
+  static calculateStrength(password: string): number { ... }
+}
+```
+
+#### **Dependências**
+```bash
+npm install crypto-js
+npm install --save-dev @types/crypto-js
+```
+
+> 📚 **Documentação Completa**: 
+> - [SECURITY_PASSWORD_HASH.md](./SECURITY_PASSWORD_HASH.md) - Detalhes de criptografia
+> - [PASSWORD_POLICIES.md](./PASSWORD_POLICIES.md) - Políticas de senha forte
+
 ## 🔧 Scripts Disponíveis
 
 ```bash

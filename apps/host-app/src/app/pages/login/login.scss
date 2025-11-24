@@ -86,3 +86,42 @@ button.action-btn {
     background: $secondary-200;
   }
 }
+
+.password-requirements {
+  background-color: rgba($primary, 0.05);
+  border-left: 3px solid $primary;
+  padding: $padding-medium;
+  margin-top: $margin-small;
+  border-radius: $border-radius-small;
+  
+  small {
+    color: $secondary-400;
+    font-size: $body-small;
+  }
+  
+  ul {
+    margin: $margin-small 0 0 0;
+    padding-left: $padding-large;
+    
+    li {
+      color: $secondary-300;
+      font-size: $body-small;
+      margin: $gap-small 0;
+      line-height: 1.5;
+    }
+  }
+}
+
+mat-hint#password-strength {
+  margin-top: $gap-small;
+  font-size: $body-small;
+  
+  strong {
+    font-weight: 600;
+  }
+}
+
+mat-error {
+  font-size: $body-small;
+  margin-top: $gap-small;
+}
