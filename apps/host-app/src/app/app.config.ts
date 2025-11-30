@@ -18,6 +18,7 @@ import {
   withEventReplay,
 } from '@angular/platform-browser';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { cacheInterceptor } from './core/interceptors/cache.interceptor';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideStore } from '@ngrx/store';
 import { provideState } from '@ngrx/store';
@@ -39,7 +40,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes, withPreloading(PreloadAllModules)),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+  provideHttpClient(withFetch(), withInterceptors([authInterceptor, cacheInterceptor])),
     provideAnimations(), 
 
     {
