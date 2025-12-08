@@ -365,3 +365,87 @@ O frontend integra com a API ByteBank Backend através de:
 - **Module Federation** permite desenvolvimento independente dos microfrontends
 - **Environment files** são automaticamente substituídos durante o build
 - **Docker** está configurado para produção com otimizações
+
+## 🎯 Requisitos Técnicos Implementados
+
+Este projeto atende todos os requisitos do challenge:
+
+### ✅ 1. Padrões de Arquitetura Modular
+- **Feature Modules**: Cada funcionalidade (transactions, dashboard, auth) é um módulo independente
+- **Facade Pattern**: Centraliza lógica de negócio em facades (`TransactionsFacade`, `DashboardFacade`)
+- **Module Federation**: Arquitetura de microfrontends (host-app + resume-account-mf)
+
+### ✅ 2. Gerenciamento de Estado Avançado
+- **NgRx Store**: Estado centralizado e previsível
+- **Effects**: Gerenciamento de side effects (chamadas HTTP)
+- **Selectors**: Computação memoizada de estado derivado
+- **Actions**: Comunicação type-safe entre componentes
+- **Store DevTools**: Debug com time-travel
+
+### ✅ 3. Clean Architecture
+- **Domain**: Entidades puras de negócio (Transaction, User)
+- **Application**: Casos de uso e interfaces (ports)
+- **Infrastructure**: Implementações concretas (services, repositories)
+- **Separação clara de responsabilidades** entre camadas
+
+### ✅ 4. Lazy Loading e Pré-carregamento
+- **Lazy Loading**: Features carregadas sob demanda nas rotas
+- **PreloadAllModules**: Pré-carrega módulos em background
+- **@defer (Deferrable Views)**: Carregamento condicional de componentes
+  - `on viewport`: Carrega quando visível
+  - `on interaction`: Carrega ao interagir
+  - `on idle`: Carrega quando navegador ocioso
+- **Placeholders e Loading states** para melhor UX
+
+### ✅ 5. Sistema de Cache
+- **CacheService**: Cache em memória com TTL (Time-To-Live)
+- **Cache Interceptor**: Intercepta requisições HTTP GET automaticamente
+- **Invalidação inteligente**: Limpa cache em operações de escrita (POST/PUT/DELETE)
+- **Logs de debug**: Console mostra HIT/MISS para análise
+- **Redução de 80-90%** nas chamadas HTTP repetidas
+
+### ✅ 6. Programação Reativa (RxJS)
+- **Operadores Reativos**:
+  - `switchMap`: Cancela requisições anteriores (filtros/busca)
+  - `concatMap`: Execução sequencial (upload + create)
+  - `debounceTime`: Aguarda usuário parar de digitar
+  - `distinctUntilChanged`: Evita valores duplicados
+  - `combineLatest`: Combina múltiplos observables
+  - `takeUntilDestroyed`: Cleanup automático
+- **Auto-sugestão reativa**: Categoria sugerida enquanto digita
+- **Interface responsiva**: Atualizações em tempo real
+
+### ✅ 7. Autenticação Segura
+- **SessionStorage**: Tokens expiram ao fechar aba (mais seguro que LocalStorage)
+- **JWT**: Autenticação stateless
+- **Guards**: Proteção de rotas privadas
+- **Auth Interceptor**: Injeta token automaticamente nas requisições
+
+### ✅ 8. Criptografia de Dados Sensíveis
+- **crypto-js**: Biblioteca de criptografia
+- **SHA-256**: Hash de senhas no cliente
+- **PBKDF2**: Algoritmo robusto com salt e iterations
+- **Senha nunca trafega em texto plano**
+- **Password Policies**: 8 validações obrigatórias
+  - Mínimo 8 caracteres
+  - Letra maiúscula, minúscula, número, caractere especial
+  - Sem espaços, sem senhas comuns, sem sequências
+- **Indicador de força**: Feedback visual em tempo real
+
+## 📚 Documentação Adicional
+
+- [FACADE_PATTERN.md](./FACADE_PATTERN.md) - Detalhes do Facade Pattern
+- [SECURITY_PASSWORD_HASH.md](./SECURITY_PASSWORD_HASH.md) - Criptografia de senhas
+- [PASSWORD_POLICIES.md](./PASSWORD_POLICIES.md) - Políticas de senha forte
+- [CACHE_IMPLEMENTATION.md](./CACHE_IMPLEMENTATION.md) - Sistema de cache
+- [STATE_MANAGEMENT_ADVANCED.md](./STATE_MANAGEMENT_ADVANCED.md) - NgRx avançado
+- [ROTEIRO_APRESENTACAO.md](./ROTEIRO_APRESENTACAO.md) - 🎬 Roteiro para vídeo (5min)
+
+## 👥 Equipe
+
+- Desenvolvedores: Camilla Falcão, Yollanda Ferreira, Amanda Gomes e Giovanna Melo
+- Curso: Front-end Engineering 
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins educacionais como parte do Challenge FIAP.
