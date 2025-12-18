@@ -30,8 +30,8 @@ export class TransactionEffects {
   loadTransactions$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(TransactionsActions.loadTransactions),
-      switchMap(({ page, limit, sort, order }) =>
-        this.getAllTransactionsUseCase.execute(page, limit, sort, order).pipe(
+      switchMap(({ page, limit, sort, order, userId }) =>
+        this.getAllTransactionsUseCase.execute(page, limit, sort, order, userId).pipe(
           map((response) =>
             TransactionsApiActions.loadTransactionsSuccess({ response })
           ),
@@ -137,6 +137,7 @@ export class TransactionEffects {
           limit: 10, // TODO: Usar o limit atual do state
           sort: 'date',
           order: 'desc',
+          userId: sessionStorage.getItem('userId') ?? null,
         }),
       ])
     );

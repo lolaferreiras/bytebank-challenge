@@ -9,6 +9,7 @@ export const TransactionsActions = createActionGroup({
       limit: number;
       sort: string;
       order: string;
+      userId?: string | null;
     }>(),
     
     'Create Transaction': props<{

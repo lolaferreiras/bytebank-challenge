@@ -6,8 +6,9 @@ export abstract class ITransactionRepository {
     page: number,
     limit: number,
     sort: string,
-    order: string
-  ): Observable<any>;
+    order: string,
+    userId?: string | null
+  ): Observable<any>; 
 
   abstract deleteTransaction(id: number): Observable<void>;
 

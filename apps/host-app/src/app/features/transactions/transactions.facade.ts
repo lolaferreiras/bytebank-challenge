@@ -48,10 +48,11 @@ export class TransactionsFacade {
     page = 1,
     limit = 10,
     sort = 'date',
-    order = 'desc'
+    order = 'desc',
+    userId: string | null = null
   ): void {
     this.store.dispatch(
-      TransactionsActions.loadTransactions({ page, limit, sort, order })
+      TransactionsActions.loadTransactions({ page, limit, sort, order, userId })
     );
   }
 

@@ -173,7 +173,8 @@ export class Extract implements OnInit, OnDestroy {
       this.pageIndex + 1,
       this.pageSize,
       this.sort,
-      this.order
+      this.order,
+      
     );
   }
 

@@ -138,11 +138,13 @@ export class TransactionExtract implements OnInit {
   }
 
   private loadTransactions(): void {
+    const userId = sessionStorage.getItem('userId');
     this.facade.loadTransactions(
       this.pageIndex + 1,
       this.pageSize,
       this.sort,
-      this.order
+      this.order,
+      userId
     );
   }
 

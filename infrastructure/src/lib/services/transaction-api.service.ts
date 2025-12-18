@@ -16,10 +16,11 @@ export class TransactionApiService implements ITransactionRepository {
     page: number,
     limit: number,
     sort: string,
-    order: string
+    order: string,
+    userId?: string | null
   ): Observable<any> {
-    const userId = localStorage.getItem('userId');
-    const url = `${this.apiUrl}/user/${userId}/statement`;
+    const uid = userId ?? sessionStorage.getItem('userId');
+    const url = `${this.apiUrl}/user/${uid}/statement`;
 
     const params = new HttpParams()
       .set('page', page.toString())
@@ -80,7 +81,7 @@ export class TransactionApiService implements ITransactionRepository {
   }
 
   getBalance(): Observable<any> {
-    const userId = localStorage.getItem('userId');
+    const userId = sessionStorage.getItem('userId');
     const url = `${this.apiUrl}/account/balance/${userId}`;
     return this.http.get<any>(url, {});
   }

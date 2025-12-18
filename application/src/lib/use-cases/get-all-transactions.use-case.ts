@@ -12,8 +12,9 @@ export class GetAllTransactionsUseCase {
     page: number, 
     limit: number, 
     sort: string, 
-    order: string
+    order: string,
+    userId: string | null = null
   ): Observable<any> {
-    return this.repository.getAllTransactions(page, limit, sort, order);
+    return this.repository.getAllTransactions(page, limit, sort, order, userId);
   }
 }
